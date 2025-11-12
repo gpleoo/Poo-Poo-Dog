@@ -1,6 +1,6 @@
 /**
  * Poo-Poo Dog Tracker - Application Core
- * Copyright (c) 2024-2025 GIAMPIETRO Leonoro & Monica Amato. All Rights Reserved.
+ * Copyright (c) 2024-2025 Giampietro Leonoro & Monica Amato. All Rights Reserved.
  *
  * PROPRIETARY AND CONFIDENTIAL
  * Unauthorized copying, modification, distribution, or use of this software,
@@ -11,17 +11,17 @@
  * may result in severe civil and criminal penalties, and will be prosecuted
  * to the maximum extent possible under the law.
  *
- * For licensing information, contact: GIAMPIETRO Leonoro & Monica Amato
+ * For licensing information, contact: Giampietro Leonoro & Monica Amato
  * DO NOT REMOVE THIS COPYRIGHT NOTICE
  *
  * Application Version: 1.0.0
- * Authors: GIAMPIETRO Leonoro, Monica Amato
+ * Authors: Giampietro Leonoro, Monica Amato
  * Created: 2024
  */
 
 // Copyright Protection - DO NOT REMOVE
 const _COPYRIGHT_ = {
-    authors: ["GIAMPIETRO Leonoro", "Monica Amato"],
+    authors: ["Giampietro Leonoro", "Monica Amato"],
     year: "2024-2025",
     rights: "All Rights Reserved",
     protected: true,
@@ -59,7 +59,7 @@ class PoopTracker {
 
     _verifyCopyright() {
         // Add copyright to console
-        console.log('%c© 2024-2025 GIAMPIETRO Leonoro & Monica Amato',
+        console.log('%c© 2024-2025 Giampietro Leonoro & Monica Amato',
             'font-size: 14px; font-weight: bold; color: #f093fb; text-shadow: 1px 1px 2px black;');
         console.log('%cTutti i Diritti Riservati - All Rights Reserved',
             'font-size: 12px; color: #667eea;');
@@ -259,12 +259,22 @@ class PoopTracker {
     }
 
     getPoopIcon(type) {
+        // Mappatura colori:
+        // healthy → poop-happy (marrone #8B4513)
+        // soft, diarrhea → poop-sad (marrone chiaro #D2B48C)
+        // hard → poop-hard (marrone scurissimo #3D2817)
+        // blood, mucus → poop-sick (rosso #FF4444)
+
         if (type === 'healthy') {
             return 'poop-happy';
+        } else if (type === 'soft' || type === 'diarrhea') {
+            return 'poop-sad';
+        } else if (type === 'hard') {
+            return 'poop-hard';
         } else if (type === 'blood' || type === 'mucus') {
             return 'poop-sick';
         } else {
-            return 'poop-sad';
+            return 'poop-sad'; // default
         }
     }
 
@@ -815,6 +825,12 @@ class PoopTracker {
 
     // Health Charts System
     generateHealthCharts() {
+        // Verifica disponibilità Chart.js
+        if (typeof Chart === 'undefined') {
+            console.error('Chart.js non disponibile');
+            return;
+        }
+
         // Attendi che il modal sia visibile prima di generare i grafici
         setTimeout(() => {
             this.generateTypeChart();
@@ -825,7 +841,10 @@ class PoopTracker {
 
     generateTypeChart() {
         const ctx = document.getElementById('typeChart');
-        if (!ctx) return;
+        if (!ctx) {
+            console.error('Canvas typeChart non trovato');
+            return;
+        }
 
         // Distruggi grafico esistente se presente
         if (this.typeChartInstance) {
@@ -900,7 +919,10 @@ class PoopTracker {
 
     generateTimelineChart() {
         const ctx = document.getElementById('timelineChart');
-        if (!ctx) return;
+        if (!ctx) {
+            console.error('Canvas timelineChart non trovato');
+            return;
+        }
 
         // Distruggi grafico esistente se presente
         if (this.timelineChartInstance) {
@@ -999,7 +1021,10 @@ class PoopTracker {
 
     generateFoodCorrelationChart() {
         const ctx = document.getElementById('foodChart');
-        if (!ctx) return;
+        if (!ctx) {
+            console.error('Canvas foodChart non trovato');
+            return;
+        }
 
         // Distruggi grafico esistente se presente
         if (this.foodChartInstance) {
@@ -1137,6 +1162,13 @@ class PoopTracker {
         }
 
         try {
+            // Verifica disponibilità jsPDF
+            if (!window.jspdf || !window.jspdf.jsPDF) {
+                console.error('jsPDF non disponibile');
+                this.showToast('❌ Libreria PDF non caricata');
+                return;
+            }
+
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
 
@@ -1379,7 +1411,7 @@ class PoopTracker {
                     doc.setFont('helvetica', 'italic');
                     doc.setTextColor(100);
                     doc.text(
-                        '© 2024-2025 GIAMPIETRO Leonoro & Monica Amato - All Rights Reserved',
+                        '© 2024-2025 Giampietro Leonoro & Monica Amato - All Rights Reserved',
                         105,
                         doc.internal.pageSize.height - 10,
                         { align: 'center' }
