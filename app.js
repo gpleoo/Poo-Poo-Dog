@@ -1,4 +1,34 @@
-// Poo-Poo Dog Tracker App
+/**
+ * Poo-Poo Dog Tracker - Application Core
+ * Copyright (c) 2024-2025 GIAMPIETRO Leonoro & Monica Amato. All Rights Reserved.
+ *
+ * PROPRIETARY AND CONFIDENTIAL
+ * Unauthorized copying, modification, distribution, or use of this software,
+ * via any medium, is strictly prohibited without explicit written permission.
+ *
+ * This software is protected by copyright law and international treaties.
+ * Unauthorized reproduction or distribution of this software, or any portion of it,
+ * may result in severe civil and criminal penalties, and will be prosecuted
+ * to the maximum extent possible under the law.
+ *
+ * For licensing information, contact: GIAMPIETRO Leonoro & Monica Amato
+ * DO NOT REMOVE THIS COPYRIGHT NOTICE
+ *
+ * Application Version: 1.0.0
+ * Authors: GIAMPIETRO Leonoro, Monica Amato
+ * Created: 2024
+ */
+
+// Copyright Protection - DO NOT REMOVE
+const _COPYRIGHT_ = {
+    authors: ["GIAMPIETRO Leonoro", "Monica Amato"],
+    year: "2024-2025",
+    rights: "All Rights Reserved",
+    protected: true,
+    version: "1.0.0"
+};
+
+// Poo-Poo Dog Tracker App - Complete Version with Dog Profile
 class PoopTracker {
     constructor() {
         this.map = null;
@@ -7,41 +37,62 @@ class PoopTracker {
         this.poops = [];
         this.poopMarkers = [];
         this.dogPhoto = null;
+        this.dogProfile = {};
+        this.savedNotes = [];
+        this.foodHistory = [];
         this.watchId = null;
+        this.activeFilters = { period: 'all', type: 'all', food: 'all' };
+        this.pendingPoopData = null;
+        this.isFirstTime = true;
+
+        // Copyright Protection
+        this._copyright = _COPYRIGHT_;
+        this._verifyCopyright();
 
         this.init();
     }
 
+    _verifyCopyright() {
+        // Add copyright to console
+        console.log('%c© 2024-2025 GIAMPIETRO Leonoro & Monica Amato',
+            'font-size: 14px; font-weight: bold; color: #f093fb; text-shadow: 1px 1px 2px black;');
+        console.log('%cTutti i Diritti Riservati - All Rights Reserved',
+            'font-size: 12px; color: #667eea;');
+        console.log('%cUnauthorized use, reproduction or distribution is prohibited and subject to legal action.',
+            'font-size: 10px; color: #ff6b6b;');
+    }
+
     init() {
-        // Inizializza la mappa
         this.initMap();
-
-        // Carica dati salvati
         this.loadSavedData();
-
-        // Inizializza geolocalizzazione
         this.initGeolocation();
-
-        // Setup event listeners
         this.setupEventListeners();
-
-        // Aggiorna il contatore
         this.updatePoopCounter();
+        this.updateStats();
+        this.updateDogName();
+
+        // Apri profilo cane se è la prima volta
+        if (this.isFirstTime && !this.dogProfile.name) {
+            setTimeout(() => {
+                this.openDogProfileModal();
+                this.showToast('👋 Benvenuto! Inserisci i dati del tuo cane per iniziare');
+            }, 1000);
+        }
+
+        // Aggiorna promemoria
+        this.updateReminders();
     }
 
     initMap() {
-        // Crea la mappa centrata su una posizione di default
         this.map = L.map('map', {
             zoomControl: true,
             attributionControl: false
-        }).setView([45.4642, 9.1900], 13); // Milano come default
+        }).setView([45.4642, 9.1900], 13);
 
-        // Aggiungi tile layer con stile cartoon-like
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
         }).addTo(this.map);
 
-        // Personalizza lo zoom control
         this.map.zoomControl.setPosition('topright');
     }
 
@@ -51,7 +102,6 @@ class PoopTracker {
             return;
         }
 
-        // Richiedi la posizione corrente
         navigator.geolocation.getCurrentPosition(
             (position) => {
                 this.userPosition = {
@@ -72,7 +122,6 @@ class PoopTracker {
             }
         );
 
-        // Tracking continuo della posizione
         this.watchId = navigator.geolocation.watchPosition(
             (position) => {
                 this.userPosition = {
@@ -95,12 +144,10 @@ class PoopTracker {
     updateUserMarker() {
         if (!this.userPosition) return;
 
-        // Rimuovi il marker precedente
         if (this.userMarker) {
             this.map.removeLayer(this.userMarker);
         }
 
-        // Crea icona personalizzata per l'utente
         const iconHtml = this.dogPhoto
             ? `<div class="dog-marker" style="background-image: url('${this.dogPhoto}'); background-size: cover; background-position: center;"></div>`
             : `<div class="dog-marker" style="display: flex; align-items: center; justify-content: center; font-size: 2em;">🐕</div>`;
@@ -112,19 +159,51 @@ class PoopTracker {
             iconAnchor: [40, 40]
         });
 
-        // Aggiungi nuovo marker
         this.userMarker = L.marker([this.userPosition.lat, this.userPosition.lng], {
             icon: userIcon,
             zIndexOffset: 1000
         }).addTo(this.map);
 
-        // Aggiungi evento click per cambiare la foto
         this.userMarker.on('click', () => {
             this.openDogPhotoModal();
         });
 
-        // Aggiungi popup
-        this.userMarker.bindPopup('<b>🐕 Tu e il tuo cane siete qui!</b><br>Clicca per cambiare la foto').openPopup();
+        const dogName = this.dogProfile.name || 'il tuo cane';
+        const popupText = this.dogPhoto
+            ? `<b>🐕 Tu e ${dogName} siete qui!</b><br>Clicca per cambiare la foto`
+            : `<b>🐕 Tu e ${dogName} siete qui!</b><br>Clicca per aggiungere la foto`;
+        this.userMarker.bindPopup(popupText);
+    }
+
+    findNearbyFreePosition(lat, lng) {
+        const MIN_DISTANCE = 0.00003;
+        const MAX_ATTEMPTS = 8;
+
+        for (let i = 0; i < MAX_ATTEMPTS; i++) {
+            let testLat = lat;
+            let testLng = lng;
+
+            if (i > 0) {
+                const angle = (i / MAX_ATTEMPTS) * 2 * Math.PI;
+                const distance = MIN_DISTANCE * (1 + i * 0.3);
+                testLat += Math.cos(angle) * distance;
+                testLng += Math.sin(angle) * distance;
+            }
+
+            const isFree = !this.poops.some(p => {
+                const dist = Math.sqrt(
+                    Math.pow(p.lat - testLat, 2) +
+                    Math.pow(p.lng - testLng, 2)
+                );
+                return dist < MIN_DISTANCE;
+            });
+
+            if (isFree) {
+                return { lat: testLat, lng: testLng };
+            }
+        }
+
+        return { lat, lng };
     }
 
     addPoop() {
@@ -133,37 +212,71 @@ class PoopTracker {
             return;
         }
 
-        const poop = {
-            id: Date.now(),
-            lat: this.userPosition.lat,
-            lng: this.userPosition.lng,
+        const position = this.findNearbyFreePosition(
+            this.userPosition.lat,
+            this.userPosition.lng
+        );
+
+        this.pendingPoopData = {
+            lat: position.lat,
+            lng: position.lng,
             timestamp: new Date().toISOString()
         };
 
+        this.openPoopDetailsModal();
+    }
+
+    savePoopWithDetails(details) {
+        if (!this.pendingPoopData) return;
+
+        const poop = {
+            id: Date.now(),
+            ...this.pendingPoopData,
+            ...details
+        };
+
         this.poops.push(poop);
+
+        // Salva cibo nella history
+        if (details.food && details.food.trim() && !this.foodHistory.includes(details.food.trim())) {
+            this.foodHistory.push(details.food.trim());
+        }
+
         this.addPoopMarker(poop);
         this.saveData();
         this.updatePoopCounter();
-        this.showToast('💩 Cacca aggiunta con successo!');
+        this.updateStats();
+        this.updateFoodSuggestions();
+        this.updateFoodFilter();
+        this.showToast('💩 Cacca registrata con successo!');
+
+        this.pendingPoopData = null;
+    }
+
+    getPoopIcon(type) {
+        if (type === 'healthy') {
+            return 'poop-happy';
+        } else if (type === 'blood' || type === 'mucus') {
+            return 'poop-sick';
+        } else {
+            return 'poop-sad';
+        }
     }
 
     addPoopMarker(poop) {
-        // Emoji casuali per variare le cacche
-        const poopEmojis = ['💩', '💩', '💩', '🧻', '🌰'];
-        const emoji = poopEmojis[Math.floor(Math.random() * poopEmojis.length)];
+        const iconName = this.getPoopIcon(poop.type);
 
         const poopIcon = L.divIcon({
-            html: `<div class="poop-marker">${emoji}</div>`,
+            html: `<svg class="poop-svg-icon"><use href="#${iconName}"></use></svg>`,
             className: 'custom-poop-marker',
-            iconSize: [40, 40],
-            iconAnchor: [20, 20]
+            iconSize: [50, 50],
+            iconAnchor: [25, 25]
         });
 
         const marker = L.marker([poop.lat, poop.lng], {
             icon: poopIcon
         }).addTo(this.map);
 
-        // Aggiungi popup con informazioni
         const date = new Date(poop.timestamp);
         const dateStr = date.toLocaleDateString('it-IT', {
             day: '2-digit',
@@ -173,9 +286,36 @@ class PoopTracker {
             minute: '2-digit'
         });
 
-        marker.bindPopup(`
+        const typeLabels = {
+            healthy: '✅ Sana',
+            soft: '⚠️ Morbida',
+            diarrhea: '💧 Diarrea',
+            hard: '🪨 Dura',
+            blood: '🩸 Con Sangue',
+            mucus: '🫧 Con Muco'
+        };
+
+        let popupContent = `
             <div style="text-align: center; font-family: 'Fredoka', cursive;">
-                <b>💩 Cacca del cane!</b><br>
+                <b>💩 Dettagli Cacca</b><br>
+                <div style="margin: 10px 0; text-align: left; font-size: 0.95em;">
+                    <b>Stato:</b> ${typeLabels[poop.type] || poop.type}<br>
+                    <b>Dimensione:</b> ${poop.size}<br>
+                    <b>Colore:</b> ${poop.color}<br>
+                    <b>Odore:</b> ${poop.smell}<br>`;
+
+        if (poop.food) {
+            popupContent += `<b>🍖 Cibo:</b> ${poop.food}<br>`;
+        }
+        if (poop.hoursSinceMeal) {
+            popupContent += `<b>⏰ Ore dal pasto:</b> ${poop.hoursSinceMeal}h<br>`;
+        }
+        if (poop.notes) {
+            popupContent += `<b>Note:</b> ${poop.notes}<br>`;
+        }
+
+        popupContent += `
+                </div>
                 📅 ${dateStr}<br>
                 <button onclick="app.deletePoop(${poop.id})" style="
                     margin-top: 10px;
@@ -189,16 +329,15 @@ class PoopTracker {
                     font-weight: 600;
                 ">🗑️ Rimuovi</button>
             </div>
-        `);
+        `;
 
+        marker.bindPopup(popupContent);
         this.poopMarkers.push({ id: poop.id, marker: marker });
     }
 
     deletePoop(poopId) {
-        // Rimuovi dalla lista
         this.poops = this.poops.filter(p => p.id !== poopId);
 
-        // Rimuovi marker dalla mappa
         const poopMarker = this.poopMarkers.find(pm => pm.id === poopId);
         if (poopMarker) {
             this.map.removeLayer(poopMarker.marker);
@@ -207,7 +346,9 @@ class PoopTracker {
 
         this.saveData();
         this.updatePoopCounter();
+        this.updateStats();
         this.showToast('🗑️ Cacca rimossa!');
+        this.updateRecentPoopsList();
     }
 
     clearAllPoops() {
@@ -216,8 +357,8 @@ class PoopTracker {
             return;
         }
 
-        if (confirm(`Sei sicuro di voler rimuovere tutte le ${this.poops.length} cacche? 💩`)) {
-            // Rimuovi tutti i marker
+        const dogName = this.dogProfile.name || 'il cane';
+        if (confirm(`Sei sicuro di voler rimuovere tutte le ${this.poops.length} cacche di ${dogName}? 💩`)) {
             this.poopMarkers.forEach(pm => {
                 this.map.removeLayer(pm.marker);
             });
@@ -226,7 +367,9 @@ class PoopTracker {
             this.poopMarkers = [];
             this.saveData();
             this.updatePoopCounter();
+            this.updateStats();
             this.showToast('✨ Tutte le cacche sono state rimosse!');
+            this.updateRecentPoopsList();
         }
     }
 
@@ -247,11 +390,214 @@ class PoopTracker {
         document.getElementById('poopCount').textContent = this.poops.length;
     }
 
+    updateDogName() {
+        if (this.dogProfile.name) {
+            const title = document.getElementById('appTitle');
+            title.textContent = `🐕 ${this.dogProfile.name} - Poo Tracker 💩`;
+        }
+    }
+
+    updateStats() {
+        const totalPoops = this.poops.length;
+        const healthyPoops = this.poops.filter(p => p.type === 'healthy').length;
+        const problemPoops = this.poops.filter(p =>
+            ['diarrhea', 'blood', 'mucus'].includes(p.type)
+        ).length;
+
+        document.getElementById('totalPoops').textContent = totalPoops;
+        document.getElementById('healthyPoops').textContent = healthyPoops;
+        document.getElementById('problemPoops').textContent = problemPoops;
+    }
+
+    updateFoodSuggestions() {
+        const datalist = document.getElementById('foodSuggestions');
+        datalist.innerHTML = this.foodHistory.map(food =>
+            `<option value="${food}">`
+        ).join('');
+    }
+
+    updateFoodFilter() {
+        const select = document.getElementById('filterFood');
+        const currentValue = select.value;
+
+        select.innerHTML = '<option value="all">Tutti i Cibi</option>' +
+            this.foodHistory.map(food =>
+                `<option value="${food}">${food}</option>`
+            ).join('');
+
+        if (this.foodHistory.includes(currentValue)) {
+            select.value = currentValue;
+        }
+    }
+
+    updateSavedNotesList() {
+        const select = document.getElementById('savedNotes');
+        select.innerHTML = '<option value="">Seleziona nota salvata o scrivi nuova...</option>' +
+            this.savedNotes.map((note, index) =>
+                `<option value="${index}">${note.substring(0, 50)}${note.length > 50 ? '...' : ''}</option>`
+            ).join('');
+    }
+
+    applyFilters() {
+        const period = document.getElementById('filterPeriod').value;
+        const type = document.getElementById('filterType').value;
+        const food = document.getElementById('filterFood').value;
+
+        this.activeFilters = { period, type, food };
+
+        this.poopMarkers.forEach(pm => {
+            this.map.removeLayer(pm.marker);
+        });
+        this.poopMarkers = [];
+
+        const filteredPoops = this.getFilteredPoops();
+        filteredPoops.forEach(poop => {
+            this.addPoopMarker(poop);
+        });
+
+        this.showToast(`📊 Filtri applicati: ${filteredPoops.length} cacche visualizzate`);
+        this.updateRecentPoopsList();
+    }
+
+    getFilteredPoops() {
+        let filtered = [...this.poops];
+
+        // Filtro periodo
+        if (this.activeFilters.period !== 'all') {
+            const now = new Date();
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+            filtered = filtered.filter(p => {
+                const poopDate = new Date(p.timestamp);
+                const poopDay = new Date(poopDate.getFullYear(), poopDate.getMonth(), poopDate.getDate());
+
+                switch(this.activeFilters.period) {
+                    case 'today':
+                        return poopDay.getTime() === today.getTime();
+                    case 'yesterday':
+                        const yesterday = new Date(today);
+                        yesterday.setDate(yesterday.getDate() - 1);
+                        return poopDay.getTime() === yesterday.getTime();
+                    case 'week':
+                        const weekAgo = new Date(today);
+                        weekAgo.setDate(weekAgo.getDate() - 7);
+                        return poopDate >= weekAgo;
+                    case 'month':
+                        const monthAgo = new Date(today);
+                        monthAgo.setMonth(monthAgo.getMonth() - 1);
+                        return poopDate >= monthAgo;
+                    default:
+                        return true;
+                }
+            });
+        }
+
+        // Filtro tipo
+        if (this.activeFilters.type !== 'all') {
+            filtered = filtered.filter(p => p.type === this.activeFilters.type);
+        }
+
+        // Filtro cibo
+        if (this.activeFilters.food !== 'all') {
+            filtered = filtered.filter(p => p.food === this.activeFilters.food);
+        }
+
+        return filtered;
+    }
+
+    resetFilters() {
+        this.activeFilters = { period: 'all', type: 'all', food: 'all' };
+        document.getElementById('filterPeriod').value = 'all';
+        document.getElementById('filterType').value = 'all';
+        document.getElementById('filterFood').value = 'all';
+        this.applyFilters();
+    }
+
+    updateRecentPoopsList() {
+        const list = document.getElementById('recentPoopsList');
+        const filteredPoops = this.getFilteredPoops();
+        const recentPoops = filteredPoops.slice(-10).reverse();
+
+        if (recentPoops.length === 0) {
+            list.innerHTML = '<p style="text-align: center; color: #666;">Nessuna cacca registrata</p>';
+            return;
+        }
+
+        const typeLabels = {
+            healthy: '✅ Sana',
+            soft: '⚠️ Morbida',
+            diarrhea: '💧 Diarrea',
+            hard: '🪨 Dura',
+            blood: '🩸 Con Sangue',
+            mucus: '🫧 Con Muco'
+        };
+
+        list.innerHTML = recentPoops.map(poop => {
+            const date = new Date(poop.timestamp);
+            const dateStr = date.toLocaleDateString('it-IT', {
+                day: '2-digit',
+                month: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+
+            let foodInfo = poop.food ? `<br><small>🍖 ${poop.food}</small>` : '';
+
+            return `
+                <div class="poop-list-item">
+                    <div class="poop-item-info">
+                        <div class="poop-item-date">${dateStr}</div>
+                        <div class="poop-item-status">${typeLabels[poop.type]}${foodInfo}</div>
+                    </div>
+                    <div class="poop-item-actions">
+                        <button class="btn-small" onclick="app.centerOnPoop(${poop.id})">📍</button>
+                        <button class="btn-small" onclick="app.deletePoop(${poop.id})">🗑️</button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    centerOnPoop(poopId) {
+        const poop = this.poops.find(p => p.id === poopId);
+        if (poop) {
+            this.map.setView([poop.lat, poop.lng], 18, { animate: true });
+            const marker = this.poopMarkers.find(pm => pm.id === poopId);
+            if (marker) {
+                marker.marker.openPopup();
+            }
+            this.closeFiltersModal();
+        }
+    }
+
+    // Modal Management
+    openPoopDetailsModal() {
+        document.getElementById('poopDetailsModal').classList.add('active');
+        document.getElementById('poopDetailsForm').reset();
+        this.updateSavedNotesList();
+        this.updateFoodSuggestions();
+    }
+
+    closePoopDetailsModal() {
+        document.getElementById('poopDetailsModal').classList.remove('active');
+        this.pendingPoopData = null;
+    }
+
+    openFiltersModal() {
+        document.getElementById('filtersModal').classList.add('active');
+        this.updateStats();
+        this.updateRecentPoopsList();
+        this.updateFoodFilter();
+    }
+
+    closeFiltersModal() {
+        document.getElementById('filtersModal').classList.remove('active');
+    }
+
     openDogPhotoModal() {
         const modal = document.getElementById('dogPhotoModal');
         modal.classList.add('active');
 
-        // Mostra foto corrente se esiste
         const preview = document.getElementById('dogPhotoPreview');
         if (this.dogPhoto) {
             preview.innerHTML = `<img src="${this.dogPhoto}" alt="Dog Photo">`;
@@ -261,8 +607,79 @@ class PoopTracker {
     }
 
     closeDogPhotoModal() {
-        const modal = document.getElementById('dogPhotoModal');
-        modal.classList.remove('active');
+        document.getElementById('dogPhotoModal').classList.remove('active');
+    }
+
+    openDogProfileModal() {
+        document.getElementById('dogProfileModal').classList.add('active');
+        this.loadDogProfileToForm();
+    }
+
+    closeDogProfileModal() {
+        document.getElementById('dogProfileModal').classList.remove('active');
+    }
+
+    loadDogProfileToForm() {
+        document.getElementById('dogName').value = this.dogProfile.name || '';
+        document.getElementById('dogBirthdate').value = this.dogProfile.birthdate || '';
+        document.getElementById('dogWeight').value = this.dogProfile.weight || '';
+        document.getElementById('dogBreed').value = this.dogProfile.breed || '';
+        document.getElementById('dogGender').value = this.dogProfile.gender || '';
+        document.getElementById('dogColor').value = this.dogProfile.color || '';
+        document.getElementById('dogMicrochip').value = this.dogProfile.microchip || '';
+        document.getElementById('dogChronicDiseases').value = this.dogProfile.chronicDiseases || '';
+        document.getElementById('dogFoodAllergies').value = this.dogProfile.foodAllergies || '';
+        document.getElementById('dogMedicineAllergies').value = this.dogProfile.medicineAllergies || '';
+        document.getElementById('dogCurrentMedicine').value = this.dogProfile.currentMedicine || '';
+        document.getElementById('dogSurgeries').value = this.dogProfile.surgeries || '';
+        document.getElementById('vetName').value = this.dogProfile.vetName || '';
+        document.getElementById('vetPhone').value = this.dogProfile.vetPhone || '';
+        document.getElementById('vetEmail').value = this.dogProfile.vetEmail || '';
+        document.getElementById('vetAddress').value = this.dogProfile.vetAddress || '';
+        document.getElementById('lastVaccination').value = this.dogProfile.lastVaccination || '';
+        document.getElementById('nextVaccination').value = this.dogProfile.nextVaccination || '';
+        document.getElementById('lastAntiparasitic').value = this.dogProfile.lastAntiparasitic || '';
+        document.getElementById('nextAntiparasitic').value = this.dogProfile.nextAntiparasitic || '';
+        document.getElementById('lastFleaTick').value = this.dogProfile.lastFleaTick || '';
+        document.getElementById('nextFleaTick').value = this.dogProfile.nextFleaTick || '';
+        document.getElementById('vaccinationNotes').value = this.dogProfile.vaccinationNotes || '';
+        document.getElementById('dogGeneralNotes').value = this.dogProfile.generalNotes || '';
+    }
+
+    saveDogProfile() {
+        this.dogProfile = {
+            name: document.getElementById('dogName').value.trim(),
+            birthdate: document.getElementById('dogBirthdate').value,
+            weight: document.getElementById('dogWeight').value,
+            breed: document.getElementById('dogBreed').value.trim(),
+            gender: document.getElementById('dogGender').value,
+            color: document.getElementById('dogColor').value.trim(),
+            microchip: document.getElementById('dogMicrochip').value.trim(),
+            chronicDiseases: document.getElementById('dogChronicDiseases').value.trim(),
+            foodAllergies: document.getElementById('dogFoodAllergies').value.trim(),
+            medicineAllergies: document.getElementById('dogMedicineAllergies').value.trim(),
+            currentMedicine: document.getElementById('dogCurrentMedicine').value.trim(),
+            surgeries: document.getElementById('dogSurgeries').value.trim(),
+            vetName: document.getElementById('vetName').value.trim(),
+            vetPhone: document.getElementById('vetPhone').value.trim(),
+            vetEmail: document.getElementById('vetEmail').value.trim(),
+            vetAddress: document.getElementById('vetAddress').value.trim(),
+            lastVaccination: document.getElementById('lastVaccination').value,
+            nextVaccination: document.getElementById('nextVaccination').value,
+            lastAntiparasitic: document.getElementById('lastAntiparasitic').value,
+            nextAntiparasitic: document.getElementById('nextAntiparasitic').value,
+            lastFleaTick: document.getElementById('lastFleaTick').value,
+            nextFleaTick: document.getElementById('nextFleaTick').value,
+            vaccinationNotes: document.getElementById('vaccinationNotes').value.trim(),
+            generalNotes: document.getElementById('dogGeneralNotes').value.trim()
+        };
+
+        this.saveData();
+        this.updateDogName();
+        this.updateUserMarker();
+        this.updateReminders();
+        this.closeDogProfileModal();
+        this.showToast(`✅ Profilo di ${this.dogProfile.name || 'il cane'} salvato!`);
     }
 
     setupEventListeners() {
@@ -276,9 +693,80 @@ class PoopTracker {
             this.centerOnUser();
         });
 
+        // Bottone filtri
+        document.getElementById('filterBtn').addEventListener('click', () => {
+            this.openFiltersModal();
+        });
+
         // Bottone cancella tutto
         document.getElementById('clearAllBtn').addEventListener('click', () => {
             this.clearAllPoops();
+        });
+
+        // Bottone profilo cane
+        document.getElementById('dogProfileBtn').addEventListener('click', () => {
+            this.openDogProfileModal();
+        });
+
+        // Form dettagli cacca
+        document.getElementById('poopDetailsForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const noteText = document.getElementById('poopNotes').value.trim();
+            const saveNoteChecked = document.getElementById('saveNote').checked;
+
+            if (saveNoteChecked && noteText && !this.savedNotes.includes(noteText)) {
+                this.savedNotes.push(noteText);
+                this.saveData();
+            }
+
+            const details = {
+                type: document.getElementById('poopType').value,
+                size: document.getElementById('poopSize').value,
+                color: document.getElementById('poopColor').value,
+                smell: document.getElementById('poopSmell').value,
+                food: document.getElementById('poopFood').value.trim(),
+                hoursSinceMeal: document.getElementById('poopHoursSinceMeal').value,
+                notes: noteText
+            };
+
+            this.savePoopWithDetails(details);
+            this.closePoopDetailsModal();
+        });
+
+        document.getElementById('cancelPoopDetails').addEventListener('click', () => {
+            this.closePoopDetailsModal();
+        });
+
+        // Selettore note salvate
+        document.getElementById('savedNotes').addEventListener('change', (e) => {
+            const index = e.target.value;
+            if (index !== '' && this.savedNotes[index]) {
+                document.getElementById('poopNotes').value = this.savedNotes[index];
+            }
+        });
+
+        // Form profilo cane
+        document.getElementById('dogProfileForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.saveDogProfile();
+        });
+
+        document.getElementById('cancelDogProfile').addEventListener('click', () => {
+            this.closeDogProfileModal();
+        });
+
+        // Filtri modal
+        document.getElementById('applyFilters').addEventListener('click', () => {
+            this.applyFilters();
+        });
+
+        document.getElementById('resetFilters').addEventListener('click', () => {
+            this.resetFilters();
+        });
+
+        document.getElementById('closeFilters').addEventListener('click', () => {
+            this.closeFiltersModal();
         });
 
         // Modal foto cane
@@ -314,7 +802,6 @@ class PoopTracker {
                 };
                 reader.readAsDataURL(file);
             } else if (this.dogPhoto) {
-                // Se c'è già una foto salvata, chiudi semplicemente
                 this.closeDogPhotoModal();
             } else {
                 this.showToast('⚠️ Seleziona prima una foto!');
@@ -330,10 +817,12 @@ class PoopTracker {
         });
 
         // Chiudi modal cliccando fuori
-        document.getElementById('dogPhotoModal').addEventListener('click', (e) => {
-            if (e.target.id === 'dogPhotoModal') {
-                this.closeDogPhotoModal();
-            }
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target.classList.contains('modal')) {
+                    modal.classList.remove('active');
+                }
+            });
         });
     }
 
@@ -352,7 +841,11 @@ class PoopTracker {
     saveData() {
         const data = {
             poops: this.poops,
-            dogPhoto: this.dogPhoto
+            dogPhoto: this.dogPhoto,
+            dogProfile: this.dogProfile,
+            savedNotes: this.savedNotes,
+            foodHistory: this.foodHistory,
+            isFirstTime: false
         };
         localStorage.setItem('poopTrackerData', JSON.stringify(data));
     }
@@ -364,6 +857,10 @@ class PoopTracker {
                 const data = JSON.parse(savedData);
                 this.poops = data.poops || [];
                 this.dogPhoto = data.dogPhoto || null;
+                this.dogProfile = data.dogProfile || {};
+                this.savedNotes = data.savedNotes || [];
+                this.foodHistory = data.foodHistory || [];
+                this.isFirstTime = data.isFirstTime !== false;
 
                 // Ricrea i marker per le cacche salvate
                 this.poops.forEach(poop => {
