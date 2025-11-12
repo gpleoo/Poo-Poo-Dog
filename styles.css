@@ -1,6 +1,6 @@
 /*
  * Poo-Poo Dog Tracker - Stylesheet
- * Copyright (c) 2024-2025 GIAMPIETRO Leonoro & Monica Amato. All Rights Reserved.
+ * Copyright (c) 2024-2025 Giampietro Leonoro & Monica Amato. All Rights Reserved.
  *
  * PROPRIETARY AND CONFIDENTIAL
  * Unauthorized copying, modification, distribution, or use of this software,
@@ -11,7 +11,7 @@
  * may result in severe civil and criminal penalties, and will be prosecuted
  * to the maximum extent possible under the law.
  *
- * For licensing information, contact: GIAMPIETRO Leonoro & Monica Amato
+ * For licensing information, contact: Giampietro Leonoro & Monica Amato
  * DO NOT REMOVE THIS COPYRIGHT NOTICE
  */
 
@@ -984,7 +984,7 @@ button:active {
 
 /* Copyright Protection Watermark - DO NOT REMOVE */
 body::before {
-    content: "Copyright GIAMPIETRO Leonoro & Monica Amato";
+    content: "Copyright Giampietro Leonoro & Monica Amato";
     position: fixed;
     opacity: 0;
     pointer-events: none;
