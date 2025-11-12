@@ -1,3 +1,33 @@
+/**
+ * Poo-Poo Dog Tracker - Application Core
+ * Copyright (c) 2024-2025 GIAMPIETRO Leonoro & Monica Amato. All Rights Reserved.
+ *
+ * PROPRIETARY AND CONFIDENTIAL
+ * Unauthorized copying, modification, distribution, or use of this software,
+ * via any medium, is strictly prohibited without explicit written permission.
+ *
+ * This software is protected by copyright law and international treaties.
+ * Unauthorized reproduction or distribution of this software, or any portion of it,
+ * may result in severe civil and criminal penalties, and will be prosecuted
+ * to the maximum extent possible under the law.
+ *
+ * For licensing information, contact: GIAMPIETRO Leonoro & Monica Amato
+ * DO NOT REMOVE THIS COPYRIGHT NOTICE
+ *
+ * Application Version: 1.0.0
+ * Authors: GIAMPIETRO Leonoro, Monica Amato
+ * Created: 2024
+ */
+
+// Copyright Protection - DO NOT REMOVE
+const _COPYRIGHT_ = {
+    authors: ["GIAMPIETRO Leonoro", "Monica Amato"],
+    year: "2024-2025",
+    rights: "All Rights Reserved",
+    protected: true,
+    version: "1.0.0"
+};
+
 // Poo-Poo Dog Tracker App - Complete Version with Dog Profile
 class PoopTracker {
     constructor() {
@@ -15,7 +45,21 @@ class PoopTracker {
         this.pendingPoopData = null;
         this.isFirstTime = true;
 
+        // Copyright Protection
+        this._copyright = _COPYRIGHT_;
+        this._verifyCopyright();
+
         this.init();
+    }
+
+    _verifyCopyright() {
+        // Add copyright to console
+        console.log('%c© 2024-2025 GIAMPIETRO Leonoro & Monica Amato',
+            'font-size: 14px; font-weight: bold; color: #f093fb; text-shadow: 1px 1px 2px black;');
+        console.log('%cTutti i Diritti Riservati - All Rights Reserved',
+            'font-size: 12px; color: #667eea;');
+        console.log('%cUnauthorized use, reproduction or distribution is prohibited and subject to legal action.',
+            'font-size: 10px; color: #ff6b6b;');
     }
 
     init() {
