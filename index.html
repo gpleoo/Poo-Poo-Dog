@@ -1,3 +1,19 @@
+<!--
+ * Poo-Poo Dog Tracker
+ * Copyright (c) 2024-2025 GIAMPIETRO Leonoro & Monica Amato. All Rights Reserved.
+ *
+ * PROPRIETARY AND CONFIDENTIAL
+ * Unauthorized copying, modification, distribution, or use of this software,
+ * via any medium, is strictly prohibited without explicit written permission.
+ *
+ * This software is protected by copyright law and international treaties.
+ * Unauthorized reproduction or distribution of this software, or any portion of it,
+ * may result in severe civil and criminal penalties, and will be prosecuted
+ * to the maximum extent possible under the law.
+ *
+ * For licensing information, contact: GIAMPIETRO Leonoro & Monica Amato
+ * DO NOT REMOVE THIS COPYRIGHT NOTICE
+-->
 <!DOCTYPE html>
 <html lang="it">
 <head>
@@ -6,6 +22,9 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#f093fb">
+    <meta name="copyright" content="Copyright (c) 2024-2025 GIAMPIETRO Leonoro & Monica Amato. All Rights Reserved.">
+    <meta name="author" content="GIAMPIETRO Leonoro, Monica Amato">
+    <meta name="rights" content="This is proprietary software. Unauthorized use is prohibited.">
     <title>🐕 Poo-Poo Dog Tracker 💩</title>
 
     <!-- Leaflet CSS -->
@@ -25,11 +44,33 @@
             </button>
             <div class="header-content">
                 <h1 class="app-title" id="appTitle">🐕 Poo-Poo Dog Tracker 💩</h1>
-                <div class="poop-counter">
-                    Cacche trovate: <span id="poopCount">0</span> 💩
+                <div class="header-stats">
+                    <div class="poop-counter">
+                        Cacche trovate: <span id="poopCount">0</span> 💩
+                    </div>
+                    <button id="remindersBtn" class="btn-reminders" title="Promemoria Vaccinazioni">
+                        <span class="reminder-icon">💉</span>
+                        <span id="remindersBadge" class="reminders-badge" style="display: none;">0</span>
+                    </button>
                 </div>
             </div>
         </header>
+
+        <!-- Reminders Modal -->
+        <div id="remindersModal" class="modal">
+            <div class="modal-content modal-reminders">
+                <h2>💉 Promemoria Vaccinazioni e Antiparassitari</h2>
+
+                <div id="remindersList" class="reminders-list">
+                    <!-- Populated by JS -->
+                </div>
+
+                <div class="form-buttons">
+                    <button id="openProfileFromReminders" class="btn-save">⚙️ Gestisci Date</button>
+                    <button id="closeReminders" class="btn-secondary">✖️ Chiudi</button>
+                </div>
+            </div>
+        </div>
 
         <!-- Map Container -->
         <div id="map"></div>
@@ -203,6 +244,7 @@
                     <div class="form-buttons">
                         <button id="applyFilters" class="btn-save">✔️ Applica Filtri</button>
                         <button id="resetFilters" class="btn-remove">🔄 Reset</button>
+                        <button id="exportPdfBtn" class="btn-export">📄 Esporta PDF</button>
                         <button id="closeFilters" class="btn-secondary">✖️ Chiudi</button>
                     </div>
                 </div>
@@ -210,6 +252,25 @@
                 <div class="recent-poops">
                     <h3>📋 Ultime Cacche</h3>
                     <div id="recentPoopsList"></div>
+                </div>
+
+                <div class="health-charts">
+                    <h3>📈 Grafici Andamento Salute</h3>
+
+                    <div class="chart-container">
+                        <h4>Distribuzione Tipo Cacche</h4>
+                        <canvas id="typeChart"></canvas>
+                    </div>
+
+                    <div class="chart-container">
+                        <h4>Andamento Temporale (Ultimi 30 Giorni)</h4>
+                        <canvas id="timelineChart"></canvas>
+                    </div>
+
+                    <div class="chart-container">
+                        <h4>Correlazione Cibo - Problemi</h4>
+                        <canvas id="foodChart"></canvas>
+                    </div>
                 </div>
             </div>
         </div>
@@ -320,6 +381,45 @@
                     </div>
 
                     <div class="profile-section">
+                        <h3>💉 Vaccinazioni e Antiparassitari</h3>
+
+                        <div class="form-group">
+                            <label>💉 Ultima Vaccinazione</label>
+                            <input type="date" id="lastVaccination">
+                        </div>
+
+                        <div class="form-group">
+                            <label>📅 Prossima Vaccinazione Prevista</label>
+                            <input type="date" id="nextVaccination">
+                        </div>
+
+                        <div class="form-group">
+                            <label>🐛 Ultimo Antiparassitario</label>
+                            <input type="date" id="lastAntiparasitic">
+                        </div>
+
+                        <div class="form-group">
+                            <label>📅 Prossimo Antiparassitario Previsto</label>
+                            <input type="date" id="nextAntiparasitic">
+                        </div>
+
+                        <div class="form-group">
+                            <label>🦟 Ultimo Antipulci/Zecche</label>
+                            <input type="date" id="lastFleaTick">
+                        </div>
+
+                        <div class="form-group">
+                            <label>📅 Prossimo Antipulci/Zecche Previsto</label>
+                            <input type="date" id="nextFleaTick">
+                        </div>
+
+                        <div class="form-group">
+                            <label>📝 Note su Vaccini e Antiparassitari</label>
+                            <textarea id="vaccinationNotes" placeholder="Es: Vaccino pentavalente, Antiparassitario mensile..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="profile-section">
                         <h3>📝 Note Generali</h3>
                         <div class="form-group">
                             <textarea id="dogGeneralNotes" placeholder="Es: Ha paura dei fuochi d'artificio, adora giocare con la palla..."></textarea>
@@ -338,7 +438,17 @@
         <div id="infoToast" class="info-toast">
             <span id="toastMessage"></span>
         </div>
+
+        <!-- Copyright Footer -->
+        <footer class="app-footer">
+            <div class="copyright-notice">
+                © 2024-2025 <strong>GIAMPIETRO Leonoro & Monica Amato</strong> - Tutti i Diritti Riservati
+            </div>
+        </footer>
     </div>
+
+    <!-- Copyright Protection - DO NOT REMOVE -->
+    <div style="display:none;" id="copyright-marker" data-authors="GIAMPIETRO_Leonoro_Monica_Amato" data-year="2024" data-protected="true"></div>
 
     <!-- SVG Icons (hidden) -->
     <svg style="display: none;">
@@ -389,6 +499,13 @@
 
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <!-- jsPDF for PDF Export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+
+    <!-- Chart.js for Health Graphs -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
     <!-- App JS -->
     <script src="app.js"></script>

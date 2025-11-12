@@ -1,3 +1,33 @@
+/**
+ * Poo-Poo Dog Tracker - Application Core
+ * Copyright (c) 2024-2025 GIAMPIETRO Leonoro & Monica Amato. All Rights Reserved.
+ *
+ * PROPRIETARY AND CONFIDENTIAL
+ * Unauthorized copying, modification, distribution, or use of this software,
+ * via any medium, is strictly prohibited without explicit written permission.
+ *
+ * This software is protected by copyright law and international treaties.
+ * Unauthorized reproduction or distribution of this software, or any portion of it,
+ * may result in severe civil and criminal penalties, and will be prosecuted
+ * to the maximum extent possible under the law.
+ *
+ * For licensing information, contact: GIAMPIETRO Leonoro & Monica Amato
+ * DO NOT REMOVE THIS COPYRIGHT NOTICE
+ *
+ * Application Version: 1.0.0
+ * Authors: GIAMPIETRO Leonoro, Monica Amato
+ * Created: 2024
+ */
+
+// Copyright Protection - DO NOT REMOVE
+const _COPYRIGHT_ = {
+    authors: ["GIAMPIETRO Leonoro", "Monica Amato"],
+    year: "2024-2025",
+    rights: "All Rights Reserved",
+    protected: true,
+    version: "1.0.0"
+};
+
 // Poo-Poo Dog Tracker App - Complete Version with Dog Profile
 class PoopTracker {
     constructor() {
@@ -15,7 +45,26 @@ class PoopTracker {
         this.pendingPoopData = null;
         this.isFirstTime = true;
 
+        // Chart instances
+        this.typeChartInstance = null;
+        this.timelineChartInstance = null;
+        this.foodChartInstance = null;
+
+        // Copyright Protection
+        this._copyright = _COPYRIGHT_;
+        this._verifyCopyright();
+
         this.init();
+    }
+
+    _verifyCopyright() {
+        // Add copyright to console
+        console.log('%c© 2024-2025 GIAMPIETRO Leonoro & Monica Amato',
+            'font-size: 14px; font-weight: bold; color: #f093fb; text-shadow: 1px 1px 2px black;');
+        console.log('%cTutti i Diritti Riservati - All Rights Reserved',
+            'font-size: 12px; color: #667eea;');
+        console.log('%cUnauthorized use, reproduction or distribution is prohibited and subject to legal action.',
+            'font-size: 10px; color: #ff6b6b;');
     }
 
     init() {
@@ -34,6 +83,9 @@ class PoopTracker {
                 this.showToast('👋 Benvenuto! Inserisci i dati del tuo cane per iniziare');
             }, 1000);
         }
+
+        // Aggiorna promemoria
+        this.updateReminders();
     }
 
     initMap() {
@@ -541,6 +593,7 @@ class PoopTracker {
         this.updateStats();
         this.updateRecentPoopsList();
         this.updateFoodFilter();
+        this.generateHealthCharts();
     }
 
     closeFiltersModal() {
@@ -589,6 +642,13 @@ class PoopTracker {
         document.getElementById('vetPhone').value = this.dogProfile.vetPhone || '';
         document.getElementById('vetEmail').value = this.dogProfile.vetEmail || '';
         document.getElementById('vetAddress').value = this.dogProfile.vetAddress || '';
+        document.getElementById('lastVaccination').value = this.dogProfile.lastVaccination || '';
+        document.getElementById('nextVaccination').value = this.dogProfile.nextVaccination || '';
+        document.getElementById('lastAntiparasitic').value = this.dogProfile.lastAntiparasitic || '';
+        document.getElementById('nextAntiparasitic').value = this.dogProfile.nextAntiparasitic || '';
+        document.getElementById('lastFleaTick').value = this.dogProfile.lastFleaTick || '';
+        document.getElementById('nextFleaTick').value = this.dogProfile.nextFleaTick || '';
+        document.getElementById('vaccinationNotes').value = this.dogProfile.vaccinationNotes || '';
         document.getElementById('dogGeneralNotes').value = this.dogProfile.generalNotes || '';
     }
 
@@ -610,14 +670,703 @@ class PoopTracker {
             vetPhone: document.getElementById('vetPhone').value.trim(),
             vetEmail: document.getElementById('vetEmail').value.trim(),
             vetAddress: document.getElementById('vetAddress').value.trim(),
+            lastVaccination: document.getElementById('lastVaccination').value,
+            nextVaccination: document.getElementById('nextVaccination').value,
+            lastAntiparasitic: document.getElementById('lastAntiparasitic').value,
+            nextAntiparasitic: document.getElementById('nextAntiparasitic').value,
+            lastFleaTick: document.getElementById('lastFleaTick').value,
+            nextFleaTick: document.getElementById('nextFleaTick').value,
+            vaccinationNotes: document.getElementById('vaccinationNotes').value.trim(),
             generalNotes: document.getElementById('dogGeneralNotes').value.trim()
         };
 
         this.saveData();
         this.updateDogName();
         this.updateUserMarker();
+        this.updateReminders();
         this.closeDogProfileModal();
         this.showToast(`✅ Profilo di ${this.dogProfile.name || 'il cane'} salvato!`);
+    }
+
+    // Reminders System
+    updateReminders() {
+        const reminders = this.getUpcomingReminders();
+        const badge = document.getElementById('remindersBadge');
+
+        if (reminders.length > 0) {
+            badge.textContent = reminders.length;
+            badge.style.display = 'block';
+
+            // Mostra notifica se ci sono promemoria urgenti
+            const urgentReminders = reminders.filter(r => r.urgency === 'urgent');
+            if (urgentReminders.length > 0) {
+                this.showToast(`⚠️ ${urgentReminders.length} promemoria urgente/i!`);
+            }
+        } else {
+            badge.style.display = 'none';
+        }
+    }
+
+    getUpcomingReminders() {
+        const reminders = [];
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const checkDate = (dateStr, label) => {
+            if (!dateStr) return null;
+
+            const date = new Date(dateStr);
+            date.setHours(0, 0, 0, 0);
+
+            const diffTime = date - today;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+            if (diffDays <= 30) {
+                let urgency = 'ok';
+                if (diffDays < 0) {
+                    urgency = 'urgent';
+                } else if (diffDays <= 7) {
+                    urgency = 'urgent';
+                } else if (diffDays <= 14) {
+                    urgency = 'warning';
+                }
+
+                return {
+                    label,
+                    date: dateStr,
+                    daysLeft: diffDays,
+                    urgency
+                };
+            }
+            return null;
+        };
+
+        const nextVacc = checkDate(this.dogProfile.nextVaccination, '💉 Prossima Vaccinazione');
+        const nextAnti = checkDate(this.dogProfile.nextAntiparasitic, '🐛 Prossimo Antiparassitario');
+        const nextFlea = checkDate(this.dogProfile.nextFleaTick, '🦟 Prossimo Antipulci/Zecche');
+
+        if (nextVacc) reminders.push(nextVacc);
+        if (nextAnti) reminders.push(nextAnti);
+        if (nextFlea) reminders.push(nextFlea);
+
+        // Ordina per urgenza e giorni rimanenti
+        reminders.sort((a, b) => {
+            const urgencyOrder = { urgent: 0, warning: 1, ok: 2 };
+            if (urgencyOrder[a.urgency] !== urgencyOrder[b.urgency]) {
+                return urgencyOrder[a.urgency] - urgencyOrder[b.urgency];
+            }
+            return a.daysLeft - b.daysLeft;
+        });
+
+        return reminders;
+    }
+
+    openRemindersModal() {
+        document.getElementById('remindersModal').classList.add('active');
+        this.updateRemindersList();
+    }
+
+    closeRemindersModal() {
+        document.getElementById('remindersModal').classList.remove('active');
+    }
+
+    updateRemindersList() {
+        const list = document.getElementById('remindersList');
+        const reminders = this.getUpcomingReminders();
+
+        if (reminders.length === 0) {
+            list.innerHTML = `
+                <div style="text-align: center; padding: 30px; color: #666;">
+                    <div style="font-size: 3em; margin-bottom: 10px;">✅</div>
+                    <p>Nessun promemoria in scadenza nei prossimi 30 giorni!</p>
+                </div>
+            `;
+            return;
+        }
+
+        list.innerHTML = reminders.map(reminder => {
+            const date = new Date(reminder.date);
+            const dateStr = date.toLocaleDateString('it-IT', {
+                day: '2-digit',
+                month: 'long',
+                year: 'numeric'
+            });
+
+            let daysText = '';
+            if (reminder.daysLeft < 0) {
+                daysText = `<strong>SCADUTO ${Math.abs(reminder.daysLeft)} giorni fa!</strong>`;
+            } else if (reminder.daysLeft === 0) {
+                daysText = '<strong>OGGI!</strong>';
+            } else if (reminder.daysLeft === 1) {
+                daysText = '<strong>Domani</strong>';
+            } else {
+                daysText = `Tra ${reminder.daysLeft} giorni`;
+            }
+
+            return `
+                <div class="reminder-item reminder-${reminder.urgency}">
+                    <div class="reminder-label">${reminder.label}</div>
+                    <div class="reminder-date">${dateStr}</div>
+                    <div class="reminder-days">${daysText}</div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    // Health Charts System
+    generateHealthCharts() {
+        // Attendi che il modal sia visibile prima di generare i grafici
+        setTimeout(() => {
+            this.generateTypeChart();
+            this.generateTimelineChart();
+            this.generateFoodCorrelationChart();
+        }, 100);
+    }
+
+    generateTypeChart() {
+        const ctx = document.getElementById('typeChart');
+        if (!ctx) return;
+
+        // Distruggi grafico esistente se presente
+        if (this.typeChartInstance) {
+            this.typeChartInstance.destroy();
+        }
+
+        // Conta i tipi di cacca
+        const typeCounts = {
+            healthy: 0,
+            soft: 0,
+            diarrhea: 0,
+            hard: 0,
+            blood: 0,
+            mucus: 0
+        };
+
+        this.poops.forEach(poop => {
+            if (typeCounts.hasOwnProperty(poop.type)) {
+                typeCounts[poop.type]++;
+            }
+        });
+
+        const typeLabels = {
+            healthy: '✅ Sana',
+            soft: '⚠️ Morbida',
+            diarrhea: '💧 Diarrea',
+            hard: '🪨 Dura',
+            blood: '🩸 Con Sangue',
+            mucus: '🫧 Con Muco'
+        };
+
+        const data = {
+            labels: Object.keys(typeCounts).map(key => typeLabels[key]),
+            datasets: [{
+                data: Object.values(typeCounts),
+                backgroundColor: [
+                    'rgba(102, 187, 106, 0.8)',  // healthy - verde
+                    'rgba(255, 167, 38, 0.8)',   // soft - arancione
+                    'rgba(239, 83, 80, 0.8)',    // diarrhea - rosso
+                    'rgba(156, 39, 176, 0.8)',   // hard - viola
+                    'rgba(244, 67, 54, 0.8)',    // blood - rosso scuro
+                    'rgba(33, 150, 243, 0.8)'    // mucus - blu
+                ],
+                borderColor: '#fff',
+                borderWidth: 2
+            }]
+        };
+
+        this.typeChartInstance = new Chart(ctx, {
+            type: 'doughnut',
+            data: data,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            font: { family: 'Fredoka' },
+                            padding: 10
+                        }
+                    },
+                    title: {
+                        display: true,
+                        text: 'Distribuzione Tipi di Cacca',
+                        font: { family: 'Fredoka', size: 16, weight: 'bold' }
+                    }
+                }
+            }
+        });
+    }
+
+    generateTimelineChart() {
+        const ctx = document.getElementById('timelineChart');
+        if (!ctx) return;
+
+        // Distruggi grafico esistente se presente
+        if (this.timelineChartInstance) {
+            this.timelineChartInstance.destroy();
+        }
+
+        // Ultimi 30 giorni
+        const today = new Date();
+        const thirtyDaysAgo = new Date(today);
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 29);
+
+        const dailyData = {};
+        const dailyProblems = {};
+
+        // Inizializza tutti i giorni
+        for (let d = new Date(thirtyDaysAgo); d <= today; d.setDate(d.getDate() + 1)) {
+            const dateKey = new Date(d).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' });
+            dailyData[dateKey] = 0;
+            dailyProblems[dateKey] = 0;
+        }
+
+        // Conta cacche per giorno
+        this.poops.forEach(poop => {
+            const poopDate = new Date(poop.timestamp);
+            if (poopDate >= thirtyDaysAgo) {
+                const dateKey = poopDate.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' });
+                if (dailyData.hasOwnProperty(dateKey)) {
+                    dailyData[dateKey]++;
+                    if (['diarrhea', 'blood', 'mucus'].includes(poop.type)) {
+                        dailyProblems[dateKey]++;
+                    }
+                }
+            }
+        });
+
+        const labels = Object.keys(dailyData);
+        const totals = Object.values(dailyData);
+        const problems = Object.values(dailyProblems);
+
+        this.timelineChartInstance = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Totale Cacche',
+                        data: totals,
+                        borderColor: 'rgba(102, 126, 234, 1)',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        tension: 0.3,
+                        fill: true
+                    },
+                    {
+                        label: 'Con Problemi',
+                        data: problems,
+                        borderColor: 'rgba(239, 83, 80, 1)',
+                        backgroundColor: 'rgba(239, 83, 80, 0.1)',
+                        tension: 0.3,
+                        fill: true
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { font: { family: 'Fredoka' } }
+                    },
+                    title: {
+                        display: true,
+                        text: 'Andamento Ultimi 30 Giorni',
+                        font: { family: 'Fredoka', size: 16, weight: 'bold' }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1,
+                            font: { family: 'Fredoka' }
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            maxRotation: 45,
+                            minRotation: 45,
+                            font: { family: 'Fredoka', size: 9 }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    generateFoodCorrelationChart() {
+        const ctx = document.getElementById('foodChart');
+        if (!ctx) return;
+
+        // Distruggi grafico esistente se presente
+        if (this.foodChartInstance) {
+            this.foodChartInstance.destroy();
+        }
+
+        // Conta cacche e problemi per cibo
+        const foodStats = {};
+
+        this.poops.forEach(poop => {
+            if (poop.food && poop.food.trim()) {
+                const food = poop.food.trim();
+                if (!foodStats[food]) {
+                    foodStats[food] = { total: 0, problems: 0 };
+                }
+                foodStats[food].total++;
+                if (['diarrhea', 'blood', 'mucus'].includes(poop.type)) {
+                    foodStats[food].problems++;
+                }
+            }
+        });
+
+        // Calcola percentuale problemi e ordina
+        const foodData = Object.entries(foodStats)
+            .map(([food, stats]) => ({
+                food,
+                total: stats.total,
+                problemRate: (stats.problems / stats.total) * 100
+            }))
+            .sort((a, b) => b.total - a.total)
+            .slice(0, 5);  // Top 5 cibi
+
+        if (foodData.length === 0) {
+            // Nessun cibo registrato
+            this.foodChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Nessun dato'],
+                    datasets: [{
+                        label: 'Tasso di Problemi (%)',
+                        data: [0],
+                        backgroundColor: 'rgba(200, 200, 200, 0.5)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Correlazione Cibo-Problemi (Top 5 Cibi)',
+                            font: { family: 'Fredoka', size: 16, weight: 'bold' }
+                        }
+                    }
+                }
+            });
+            return;
+        }
+
+        const labels = foodData.map(d => d.food);
+        const problemRates = foodData.map(d => d.problemRate);
+        const colors = problemRates.map(rate => {
+            if (rate > 50) return 'rgba(239, 83, 80, 0.8)';  // rosso
+            if (rate > 20) return 'rgba(255, 167, 38, 0.8)'; // arancione
+            return 'rgba(102, 187, 106, 0.8)';  // verde
+        });
+
+        this.foodChartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Tasso di Problemi (%)',
+                    data: problemRates,
+                    backgroundColor: colors,
+                    borderColor: colors.map(c => c.replace('0.8', '1')),
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    title: {
+                        display: true,
+                        text: 'Correlazione Cibo-Problemi (Top 5 Cibi)',
+                        font: { family: 'Fredoka', size: 16, weight: 'bold' }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const foodItem = foodData[context.dataIndex];
+                                return [
+                                    `Tasso problemi: ${context.parsed.y.toFixed(1)}%`,
+                                    `Totale cacche: ${foodItem.total}`
+                                ];
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: {
+                            callback: function(value) {
+                                return value + '%';
+                            },
+                            font: { family: 'Fredoka' }
+                        },
+                        title: {
+                            display: true,
+                            text: 'Percentuale Problemi',
+                            font: { family: 'Fredoka' }
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            font: { family: 'Fredoka' }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // PDF Export System
+    generatePdfReport() {
+        if (this.poops.length === 0) {
+            this.showToast('⚠️ Nessuna cacca da esportare!');
+            return;
+        }
+
+        try {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            const dogName = this.dogProfile.name || 'Cane';
+            const today = new Date().toLocaleDateString('it-IT');
+
+            // Intestazione
+            doc.setFontSize(18);
+            doc.setFont('helvetica', 'bold');
+            doc.text(`Report Salute - ${dogName}`, 105, 20, { align: 'center' });
+
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'normal');
+            doc.text(`Generato il: ${today}`, 105, 28, { align: 'center' });
+
+            let yPos = 40;
+
+            // Informazioni Cane
+            doc.setFontSize(14);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Informazioni Cane', 14, yPos);
+            yPos += 8;
+
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'normal');
+
+            const dogInfo = [
+                ['Nome:', this.dogProfile.name || 'N/D'],
+                ['Razza:', this.dogProfile.breed || 'N/D'],
+                ['Sesso:', this.dogProfile.gender || 'N/D'],
+                ['Data di Nascita:', this.dogProfile.birthdate || 'N/D'],
+                ['Peso:', this.dogProfile.weight ? `${this.dogProfile.weight} kg` : 'N/D'],
+                ['Colore:', this.dogProfile.color || 'N/D'],
+                ['Microchip:', this.dogProfile.microchip || 'N/D']
+            ];
+
+            dogInfo.forEach(([label, value]) => {
+                doc.text(label, 14, yPos);
+                doc.text(value, 60, yPos);
+                yPos += 6;
+            });
+
+            yPos += 4;
+
+            // Informazioni Sanitarie
+            if (this.dogProfile.chronicDiseases || this.dogProfile.foodAllergies ||
+                this.dogProfile.medicineAllergies || this.dogProfile.currentMedicine || this.dogProfile.surgeries) {
+
+                doc.setFontSize(14);
+                doc.setFont('helvetica', 'bold');
+                doc.text('Informazioni Sanitarie', 14, yPos);
+                yPos += 8;
+
+                doc.setFontSize(10);
+                doc.setFont('helvetica', 'normal');
+
+                if (this.dogProfile.chronicDiseases) {
+                    doc.text('Malattie Croniche:', 14, yPos);
+                    const lines = doc.splitTextToSize(this.dogProfile.chronicDiseases, 170);
+                    doc.text(lines, 14, yPos + 6);
+                    yPos += 6 + (lines.length * 6);
+                }
+
+                if (this.dogProfile.foodAllergies) {
+                    doc.text('Allergie Alimentari:', 14, yPos);
+                    const lines = doc.splitTextToSize(this.dogProfile.foodAllergies, 170);
+                    doc.text(lines, 14, yPos + 6);
+                    yPos += 6 + (lines.length * 6);
+                }
+
+                if (this.dogProfile.medicineAllergies) {
+                    doc.text('Allergie Farmaci:', 14, yPos);
+                    const lines = doc.splitTextToSize(this.dogProfile.medicineAllergies, 170);
+                    doc.text(lines, 14, yPos + 6);
+                    yPos += 6 + (lines.length * 6);
+                }
+
+                if (this.dogProfile.currentMedicine) {
+                    doc.text('Farmaci Attuali:', 14, yPos);
+                    const lines = doc.splitTextToSize(this.dogProfile.currentMedicine, 170);
+                    doc.text(lines, 14, yPos + 6);
+                    yPos += 6 + (lines.length * 6);
+                }
+
+                if (this.dogProfile.surgeries) {
+                    doc.text('Interventi Chirurgici:', 14, yPos);
+                    const lines = doc.splitTextToSize(this.dogProfile.surgeries, 170);
+                    doc.text(lines, 14, yPos + 6);
+                    yPos += 6 + (lines.length * 6);
+                }
+
+                yPos += 4;
+            }
+
+            // Veterinario
+            if (this.dogProfile.vetName || this.dogProfile.vetPhone || this.dogProfile.vetEmail) {
+                if (yPos > 250) {
+                    doc.addPage();
+                    yPos = 20;
+                }
+
+                doc.setFontSize(14);
+                doc.setFont('helvetica', 'bold');
+                doc.text('Veterinario di Riferimento', 14, yPos);
+                yPos += 8;
+
+                doc.setFontSize(10);
+                doc.setFont('helvetica', 'normal');
+
+                if (this.dogProfile.vetName) {
+                    doc.text('Nome:', 14, yPos);
+                    doc.text(this.dogProfile.vetName, 60, yPos);
+                    yPos += 6;
+                }
+
+                if (this.dogProfile.vetPhone) {
+                    doc.text('Telefono:', 14, yPos);
+                    doc.text(this.dogProfile.vetPhone, 60, yPos);
+                    yPos += 6;
+                }
+
+                if (this.dogProfile.vetEmail) {
+                    doc.text('Email:', 14, yPos);
+                    doc.text(this.dogProfile.vetEmail, 60, yPos);
+                    yPos += 6;
+                }
+
+                if (this.dogProfile.vetAddress) {
+                    doc.text('Indirizzo:', 14, yPos);
+                    const lines = doc.splitTextToSize(this.dogProfile.vetAddress, 130);
+                    doc.text(lines, 60, yPos);
+                    yPos += lines.length * 6;
+                }
+
+                yPos += 4;
+            }
+
+            // Statistiche
+            if (yPos > 230) {
+                doc.addPage();
+                yPos = 20;
+            }
+
+            const totalPoops = this.poops.length;
+            const healthyPoops = this.poops.filter(p => p.type === 'healthy').length;
+            const problemPoops = this.poops.filter(p => ['diarrhea', 'blood', 'mucus'].includes(p.type)).length;
+            const healthyPercentage = totalPoops > 0 ? Math.round((healthyPoops / totalPoops) * 100) : 0;
+
+            doc.setFontSize(14);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Statistiche Salute', 14, yPos);
+            yPos += 8;
+
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'normal');
+
+            doc.text(`Totale Cacche Registrate: ${totalPoops}`, 14, yPos);
+            yPos += 6;
+            doc.text(`Cacche Sane: ${healthyPoops} (${healthyPercentage}%)`, 14, yPos);
+            yPos += 6;
+            doc.text(`Cacche con Problemi: ${problemPoops}`, 14, yPos);
+            yPos += 10;
+
+            // Tabella Ultime Cacche
+            doc.addPage();
+
+            doc.setFontSize(14);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Storico Recente (Ultimi 50 Registrazioni)', 105, 20, { align: 'center' });
+
+            const typeLabels = {
+                healthy: 'Sana',
+                soft: 'Morbida',
+                diarrhea: 'Diarrea',
+                hard: 'Dura',
+                blood: 'Con Sangue',
+                mucus: 'Con Muco'
+            };
+
+            const tableData = this.poops.slice(-50).reverse().map(poop => {
+                const date = new Date(poop.timestamp);
+                const dateStr = date.toLocaleDateString('it-IT', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+
+                return [
+                    dateStr,
+                    typeLabels[poop.type] || poop.type,
+                    poop.size || 'N/D',
+                    poop.color || 'N/D',
+                    poop.food || 'N/D',
+                    poop.notes ? poop.notes.substring(0, 30) + (poop.notes.length > 30 ? '...' : '') : ''
+                ];
+            });
+
+            doc.autoTable({
+                startY: 30,
+                head: [['Data/Ora', 'Tipo', 'Dimensione', 'Colore', 'Cibo', 'Note']],
+                body: tableData,
+                styles: { fontSize: 8, cellPadding: 2 },
+                headStyles: { fillColor: [102, 126, 234], fontStyle: 'bold' },
+                alternateRowStyles: { fillColor: [245, 245, 250] },
+                margin: { top: 30, bottom: 30 },
+                didDrawPage: (data) => {
+                    // Footer copyright su ogni pagina
+                    doc.setFontSize(8);
+                    doc.setFont('helvetica', 'italic');
+                    doc.setTextColor(100);
+                    doc.text(
+                        '© 2024-2025 GIAMPIETRO Leonoro & Monica Amato - All Rights Reserved',
+                        105,
+                        doc.internal.pageSize.height - 10,
+                        { align: 'center' }
+                    );
+                }
+            });
+
+            // Salva PDF
+            const fileName = `${dogName}_Report_Salute_${today.replace(/\//g, '-')}.pdf`;
+            doc.save(fileName);
+
+            this.showToast('✅ PDF generato con successo!');
+        } catch (error) {
+            console.error('Errore generazione PDF:', error);
+            this.showToast('❌ Errore nella generazione del PDF');
+        }
     }
 
     setupEventListeners() {
@@ -643,6 +1392,22 @@ class PoopTracker {
 
         // Bottone profilo cane
         document.getElementById('dogProfileBtn').addEventListener('click', () => {
+            this.openDogProfileModal();
+        });
+
+        // Bottone promemoria
+        document.getElementById('remindersBtn').addEventListener('click', () => {
+            this.openRemindersModal();
+        });
+
+        // Chiudi promemoria modal
+        document.getElementById('closeReminders').addEventListener('click', () => {
+            this.closeRemindersModal();
+        });
+
+        // Apri profilo da promemoria
+        document.getElementById('openProfileFromReminders').addEventListener('click', () => {
+            this.closeRemindersModal();
             this.openDogProfileModal();
         });
 
@@ -705,6 +1470,11 @@ class PoopTracker {
 
         document.getElementById('closeFilters').addEventListener('click', () => {
             this.closeFiltersModal();
+        });
+
+        // Esporta PDF
+        document.getElementById('exportPdfBtn').addEventListener('click', () => {
+            this.generatePdfReport();
         });
 
         // Modal foto cane

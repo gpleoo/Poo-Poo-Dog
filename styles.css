@@ -1,3 +1,20 @@
+/*
+ * Poo-Poo Dog Tracker - Stylesheet
+ * Copyright (c) 2024-2025 GIAMPIETRO Leonoro & Monica Amato. All Rights Reserved.
+ *
+ * PROPRIETARY AND CONFIDENTIAL
+ * Unauthorized copying, modification, distribution, or use of this software,
+ * via any medium, is strictly prohibited without explicit written permission.
+ *
+ * This software is protected by copyright law and international treaties.
+ * Unauthorized reproduction or distribution of this software, or any portion of it,
+ * may result in severe civil and criminal penalties, and will be prosecuted
+ * to the maximum extent possible under the law.
+ *
+ * For licensing information, contact: GIAMPIETRO Leonoro & Monica Amato
+ * DO NOT REMOVE THIS COPYRIGHT NOTICE
+ */
+
 /* Reset e Base */
 * {
     margin: 0;
@@ -44,6 +61,14 @@ body {
     letter-spacing: 2px;
 }
 
+.header-stats {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
 .poop-counter {
     font-size: 1.2em;
     color: #fff;
@@ -53,6 +78,56 @@ body {
     padding: 5px 20px;
     border-radius: 20px;
     backdrop-filter: blur(10px);
+}
+
+.btn-reminders {
+    position: relative;
+    background: rgba(255, 255, 255, 0.3);
+    border: 2px solid white;
+    border-radius: 50%;
+    width: 45px;
+    height: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-reminders:hover {
+    background: rgba(255, 255, 255, 0.5);
+    transform: scale(1.1);
+}
+
+.reminder-icon {
+    font-size: 1.5em;
+}
+
+.reminders-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: #f5576c;
+    color: white;
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75em;
+    font-weight: 700;
+    border: 2px solid white;
+    animation: pulse-badge 2s infinite;
+}
+
+@keyframes pulse-badge {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.15);
+    }
 }
 
 /* Map */
@@ -479,6 +554,21 @@ button:active {
     box-shadow: 0 6px 20px rgba(168, 237, 234, 0.5);
 }
 
+.btn-export {
+    padding: 12px 30px;
+    border-radius: 25px;
+    font-size: 1.1em;
+    font-weight: 600;
+    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+    color: #333;
+    box-shadow: 0 4px 15px rgba(67, 233, 123, 0.4);
+}
+
+.btn-export:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(67, 233, 123, 0.6);
+}
+
 /* Stats Summary */
 .stats-summary {
     display: grid;
@@ -741,4 +831,162 @@ button:active {
         font-size: 1.4em;
         left: 10px;
     }
+}
+
+/* Copyright Footer */
+.app-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(0, 0, 0, 0.85);
+    color: white;
+    padding: 8px 15px;
+    padding-bottom: max(8px, env(safe-area-inset-bottom, 8px));
+    text-align: center;
+    font-size: 0.75em;
+    z-index: 999;
+    backdrop-filter: blur(10px);
+    border-top: 2px solid rgba(255, 255, 255, 0.1);
+    pointer-events: none;
+}
+
+.copyright-notice {
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}
+
+.copyright-notice strong {
+    font-weight: 700;
+    color: #f093fb;
+}
+
+@media (max-width: 768px) {
+    .app-footer {
+        font-size: 0.65em;
+        padding: 6px 10px;
+        padding-bottom: max(6px, env(safe-area-inset-bottom, 6px));
+    }
+}
+
+/* Reminders Modal */
+.modal-reminders {
+    max-width: 600px;
+    max-height: 85vh;
+    overflow-y: auto;
+}
+
+.reminders-list {
+    margin-bottom: 20px;
+}
+
+.reminder-item {
+    background: white;
+    padding: 15px;
+    border-radius: 15px;
+    margin-bottom: 12px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    border-left: 5px solid #667eea;
+}
+
+.reminder-item.urgent {
+    border-left-color: #f5576c;
+    background: #fff5f5;
+}
+
+.reminder-item.warning {
+    border-left-color: #ffa500;
+    background: #fff9e6;
+}
+
+.reminder-item.ok {
+    border-left-color: #43e97b;
+    background: #f0fff4;
+}
+
+.reminder-title {
+    font-weight: 700;
+    font-size: 1.1em;
+    color: #333;
+    margin-bottom: 5px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.reminder-date {
+    color: #666;
+    font-size: 0.95em;
+    margin-bottom: 3px;
+}
+
+.reminder-status {
+    font-size: 0.9em;
+    font-weight: 600;
+    margin-top: 5px;
+}
+
+.reminder-status.urgent {
+    color: #f5576c;
+}
+
+.reminder-status.warning {
+    color: #ff8800;
+}
+
+.reminder-status.ok {
+    color: #43e97b;
+}
+
+.no-reminders {
+    text-align: center;
+    padding: 40px 20px;
+    color: #666;
+}
+
+.no-reminders-icon {
+    font-size: 3em;
+    margin-bottom: 15px;
+}
+
+/* Health Charts */
+.health-charts {
+    background: rgba(255, 255, 255, 0.5);
+    padding: 20px;
+    border-radius: 20px;
+    margin-top: 20px;
+}
+
+.health-charts h3 {
+    color: #d53369;
+    margin-bottom: 20px;
+    font-size: 1.3em;
+}
+
+.chart-container {
+    background: white;
+    padding: 20px;
+    border-radius: 15px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.chart-container h4 {
+    color: #667eea;
+    margin-bottom: 15px;
+    font-size: 1.1em;
+    text-align: center;
+}
+
+.chart-container canvas {
+    max-height: 300px;
+}
+
+/* Copyright Protection Watermark - DO NOT REMOVE */
+body::before {
+    content: "Copyright GIAMPIETRO Leonoro & Monica Amato";
+    position: fixed;
+    opacity: 0;
+    pointer-events: none;
+    z-index: -1;
 }
