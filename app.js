@@ -78,6 +78,9 @@ class PoopTracker {
                 this.showToast('👋 Benvenuto! Inserisci i dati del tuo cane per iniziare');
             }, 1000);
         }
+
+        // Aggiorna promemoria
+        this.updateReminders();
     }
 
     initMap() {
@@ -633,6 +636,13 @@ class PoopTracker {
         document.getElementById('vetPhone').value = this.dogProfile.vetPhone || '';
         document.getElementById('vetEmail').value = this.dogProfile.vetEmail || '';
         document.getElementById('vetAddress').value = this.dogProfile.vetAddress || '';
+        document.getElementById('lastVaccination').value = this.dogProfile.lastVaccination || '';
+        document.getElementById('nextVaccination').value = this.dogProfile.nextVaccination || '';
+        document.getElementById('lastAntiparasitic').value = this.dogProfile.lastAntiparasitic || '';
+        document.getElementById('nextAntiparasitic').value = this.dogProfile.nextAntiparasitic || '';
+        document.getElementById('lastFleaTick').value = this.dogProfile.lastFleaTick || '';
+        document.getElementById('nextFleaTick').value = this.dogProfile.nextFleaTick || '';
+        document.getElementById('vaccinationNotes').value = this.dogProfile.vaccinationNotes || '';
         document.getElementById('dogGeneralNotes').value = this.dogProfile.generalNotes || '';
     }
 
@@ -654,12 +664,20 @@ class PoopTracker {
             vetPhone: document.getElementById('vetPhone').value.trim(),
             vetEmail: document.getElementById('vetEmail').value.trim(),
             vetAddress: document.getElementById('vetAddress').value.trim(),
+            lastVaccination: document.getElementById('lastVaccination').value,
+            nextVaccination: document.getElementById('nextVaccination').value,
+            lastAntiparasitic: document.getElementById('lastAntiparasitic').value,
+            nextAntiparasitic: document.getElementById('nextAntiparasitic').value,
+            lastFleaTick: document.getElementById('lastFleaTick').value,
+            nextFleaTick: document.getElementById('nextFleaTick').value,
+            vaccinationNotes: document.getElementById('vaccinationNotes').value.trim(),
             generalNotes: document.getElementById('dogGeneralNotes').value.trim()
         };
 
         this.saveData();
         this.updateDogName();
         this.updateUserMarker();
+        this.updateReminders();
         this.closeDogProfileModal();
         this.showToast(`✅ Profilo di ${this.dogProfile.name || 'il cane'} salvato!`);
     }

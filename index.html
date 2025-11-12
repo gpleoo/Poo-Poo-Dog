@@ -244,6 +244,7 @@
                     <div class="form-buttons">
                         <button id="applyFilters" class="btn-save">✔️ Applica Filtri</button>
                         <button id="resetFilters" class="btn-remove">🔄 Reset</button>
+                        <button id="exportPdfBtn" class="btn-export">📄 Esporta PDF</button>
                         <button id="closeFilters" class="btn-secondary">✖️ Chiudi</button>
                     </div>
                 </div>
@@ -251,6 +252,25 @@
                 <div class="recent-poops">
                     <h3>📋 Ultime Cacche</h3>
                     <div id="recentPoopsList"></div>
+                </div>
+
+                <div class="health-charts">
+                    <h3>📈 Grafici Andamento Salute</h3>
+
+                    <div class="chart-container">
+                        <h4>Distribuzione Tipo Cacche</h4>
+                        <canvas id="typeChart"></canvas>
+                    </div>
+
+                    <div class="chart-container">
+                        <h4>Andamento Temporale (Ultimi 30 Giorni)</h4>
+                        <canvas id="timelineChart"></canvas>
+                    </div>
+
+                    <div class="chart-container">
+                        <h4>Correlazione Cibo - Problemi</h4>
+                        <canvas id="foodChart"></canvas>
+                    </div>
                 </div>
             </div>
         </div>
