@@ -453,46 +453,69 @@
     <!-- SVG Icons (hidden) -->
     <svg style="display: none;">
         <defs>
-            <!-- Happy Poop -->
+            <!-- Happy Poop (Sana - Marrone) -->
             <symbol id="poop-happy" viewBox="0 0 100 100">
+                <!-- Corpo marrone -->
                 <ellipse cx="50" cy="70" rx="35" ry="30" fill="#8B4513"/>
                 <ellipse cx="50" cy="50" rx="30" ry="25" fill="#8B4513"/>
                 <ellipse cx="50" cy="30" rx="20" ry="18" fill="#8B4513"/>
-                <!-- Eyes -->
-                <circle cx="40" cy="45" r="4" fill="white"/>
-                <circle cx="60" cy="45" r="4" fill="white"/>
-                <circle cx="41" cy="44" r="2" fill="black"/>
-                <circle cx="61" cy="44" r="2" fill="black"/>
-                <!-- Smile -->
-                <path d="M 38 55 Q 50 62 62 55" stroke="white" stroke-width="2" fill="none" stroke-linecap="round"/>
+                <!-- Ombre per profondità -->
+                <ellipse cx="50" cy="72" rx="30" ry="25" fill="#6B3410" opacity="0.3"/>
+                <!-- Occhi grandi bianchi -->
+                <circle cx="40" cy="45" r="7" fill="white"/>
+                <circle cx="60" cy="45" r="7" fill="white"/>
+                <!-- Pupille grandi -->
+                <circle cx="41" cy="45" r="3.5" fill="black"/>
+                <circle cx="61" cy="45" r="3.5" fill="black"/>
+                <!-- Riflessi negli occhi -->
+                <circle cx="39" cy="43" r="1.5" fill="white" opacity="0.8"/>
+                <circle cx="59" cy="43" r="1.5" fill="white" opacity="0.8"/>
+                <!-- Sorriso grande -->
+                <path d="M 35 56 Q 50 65 65 56" stroke="white" stroke-width="3" fill="none" stroke-linecap="round"/>
             </symbol>
 
-            <!-- Sad Poop -->
+            <!-- Sad Poop (Morbida/Diarrea - Marrone Chiarissimo) -->
             <symbol id="poop-sad" viewBox="0 0 100 100">
-                <ellipse cx="50" cy="70" rx="35" ry="30" fill="#654321"/>
-                <ellipse cx="50" cy="50" rx="30" ry="25" fill="#654321"/>
-                <ellipse cx="50" cy="30" rx="20" ry="18" fill="#654321"/>
-                <!-- Eyes -->
-                <circle cx="40" cy="45" r="4" fill="white"/>
-                <circle cx="60" cy="45" r="4" fill="white"/>
-                <circle cx="41" cy="44" r="2" fill="black"/>
-                <circle cx="61" cy="44" r="2" fill="black"/>
-                <!-- Sad mouth -->
-                <path d="M 38 60 Q 50 53 62 60" stroke="white" stroke-width="2" fill="none" stroke-linecap="round"/>
+                <!-- Corpo marrone molto chiaro -->
+                <ellipse cx="50" cy="70" rx="35" ry="30" fill="#D2B48C"/>
+                <ellipse cx="50" cy="50" rx="30" ry="25" fill="#D2B48C"/>
+                <ellipse cx="50" cy="30" rx="20" ry="18" fill="#D2B48C"/>
+                <!-- Ombre per profondità -->
+                <ellipse cx="50" cy="72" rx="30" ry="25" fill="#C19A6B" opacity="0.3"/>
+                <!-- Occhi grandi bianchi -->
+                <circle cx="40" cy="45" r="7" fill="white"/>
+                <circle cx="60" cy="45" r="7" fill="white"/>
+                <!-- Pupille grandi -->
+                <circle cx="41" cy="46" r="3.5" fill="black"/>
+                <circle cx="61" cy="46" r="3.5" fill="black"/>
+                <!-- Riflessi negli occhi -->
+                <circle cx="39" cy="44" r="1.5" fill="white" opacity="0.8"/>
+                <circle cx="59" cy="44" r="1.5" fill="white" opacity="0.8"/>
+                <!-- Bocca triste -->
+                <path d="M 35 62 Q 50 56 65 62" stroke="black" stroke-width="3" fill="none" stroke-linecap="round"/>
             </symbol>
 
-            <!-- Sick Poop -->
+            <!-- Sick Poop (Sangue/Muco - Rosso Acceso) -->
             <symbol id="poop-sick" viewBox="0 0 100 100">
-                <ellipse cx="50" cy="70" rx="35" ry="30" fill="#9b7653"/>
-                <ellipse cx="50" cy="50" rx="30" ry="25" fill="#9b7653"/>
-                <ellipse cx="50" cy="30" rx="20" ry="18" fill="#9b7653"/>
-                <!-- Eyes X_X -->
-                <line x1="37" y1="42" x2="43" y2="48" stroke="black" stroke-width="2"/>
-                <line x1="43" y1="42" x2="37" y2="48" stroke="black" stroke-width="2"/>
-                <line x1="57" y1="42" x2="63" y2="48" stroke="black" stroke-width="2"/>
-                <line x1="63" y1="42" x2="57" y2="48" stroke="black" stroke-width="2"/>
-                <!-- Wavy mouth -->
-                <path d="M 38 57 Q 44 54 50 57 Q 56 60 62 57" stroke="black" stroke-width="2" fill="none"/>
+                <!-- Corpo rosso acceso -->
+                <ellipse cx="50" cy="70" rx="35" ry="30" fill="#FF4444"/>
+                <ellipse cx="50" cy="50" rx="30" ry="25" fill="#FF4444"/>
+                <ellipse cx="50" cy="30" rx="20" ry="18" fill="#FF4444"/>
+                <!-- Ombre per profondità -->
+                <ellipse cx="50" cy="72" rx="30" ry="25" fill="#CC0000" opacity="0.3"/>
+                <!-- Occhi grandi bianchi -->
+                <circle cx="40" cy="45" r="7" fill="white"/>
+                <circle cx="60" cy="45" r="7" fill="white"/>
+                <!-- Occhi a spirale (malessere) -->
+                <path d="M 37 45 Q 37 42 40 42 Q 43 42 43 45 Q 43 47 41 47"
+                      stroke="black" stroke-width="2" fill="none" stroke-linecap="round"/>
+                <path d="M 57 45 Q 57 42 60 42 Q 63 42 63 45 Q 63 47 61 47"
+                      stroke="black" stroke-width="2" fill="none" stroke-linecap="round"/>
+                <!-- Bocca ondulata (malessere) -->
+                <path d="M 35 58 Q 42 56 50 58 Q 58 60 65 58" stroke="black" stroke-width="3" fill="none" stroke-linecap="round"/>
+                <!-- Gocce di sudore -->
+                <ellipse cx="30" cy="35" rx="3" ry="4" fill="#88CCFF" opacity="0.7"/>
+                <ellipse cx="70" cy="35" rx="3" ry="4" fill="#88CCFF" opacity="0.7"/>
             </symbol>
         </defs>
     </svg>

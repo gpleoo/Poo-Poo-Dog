@@ -1143,6 +1143,34 @@ class PoopTracker {
             const dogName = this.dogProfile.name || 'Cane';
             const today = new Date().toLocaleDateString('it-IT');
 
+            // Traduzioni valori in italiano
+            const genderLabels = {
+                'male': 'Maschio',
+                'female': 'Femmina',
+                '': 'Non specificato'
+            };
+
+            const sizeLabels = {
+                'small': 'Piccola',
+                'medium': 'Media',
+                'large': 'Grande'
+            };
+
+            const colorLabels = {
+                'normal': 'Marrone Normale',
+                'light': 'Chiaro',
+                'dark': 'Scuro',
+                'green': 'Verdastro',
+                'yellow': 'Giallastro',
+                'red': 'Rossastro'
+            };
+
+            const smellLabels = {
+                'normal': 'Normale',
+                'strong': 'Molto Forte',
+                'unusual': 'Insolito'
+            };
+
             // Intestazione
             doc.setFontSize(18);
             doc.setFont('helvetica', 'bold');
@@ -1166,7 +1194,7 @@ class PoopTracker {
             const dogInfo = [
                 ['Nome:', this.dogProfile.name || 'N/D'],
                 ['Razza:', this.dogProfile.breed || 'N/D'],
-                ['Sesso:', this.dogProfile.gender || 'N/D'],
+                ['Sesso:', genderLabels[this.dogProfile.gender] || 'N/D'],
                 ['Data di Nascita:', this.dogProfile.birthdate || 'N/D'],
                 ['Peso:', this.dogProfile.weight ? `${this.dogProfile.weight} kg` : 'N/D'],
                 ['Colore:', this.dogProfile.color || 'N/D'],
@@ -1329,18 +1357,19 @@ class PoopTracker {
                 return [
                     dateStr,
                     typeLabels[poop.type] || poop.type,
-                    poop.size || 'N/D',
-                    poop.color || 'N/D',
+                    sizeLabels[poop.size] || poop.size || 'N/D',
+                    colorLabels[poop.color] || poop.color || 'N/D',
+                    smellLabels[poop.smell] || poop.smell || 'N/D',
                     poop.food || 'N/D',
-                    poop.notes ? poop.notes.substring(0, 30) + (poop.notes.length > 30 ? '...' : '') : ''
+                    poop.notes ? poop.notes.substring(0, 25) + (poop.notes.length > 25 ? '...' : '') : ''
                 ];
             });
 
             doc.autoTable({
                 startY: 30,
-                head: [['Data/Ora', 'Tipo', 'Dimensione', 'Colore', 'Cibo', 'Note']],
+                head: [['Data/Ora', 'Tipo', 'Dim.', 'Colore', 'Odore', 'Cibo', 'Note']],
                 body: tableData,
-                styles: { fontSize: 8, cellPadding: 2 },
+                styles: { fontSize: 7, cellPadding: 1.5 },
                 headStyles: { fillColor: [102, 126, 234], fontStyle: 'bold' },
                 alternateRowStyles: { fillColor: [245, 245, 250] },
                 margin: { top: 30, bottom: 30 },
