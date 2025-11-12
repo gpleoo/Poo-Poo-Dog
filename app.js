@@ -123,8 +123,11 @@ class PoopTracker {
             this.openDogPhotoModal();
         });
 
-        // Aggiungi popup
-        this.userMarker.bindPopup('<b>🐕 Tu e il tuo cane siete qui!</b><br>Clicca per cambiare la foto').openPopup();
+        // Aggiungi popup (ma non aprirlo automaticamente)
+        const popupText = this.dogPhoto
+            ? '<b>🐕 Tu e il tuo cane siete qui!</b><br>Clicca per cambiare la foto'
+            : '<b>🐕 Tu e il tuo cane siete qui!</b><br>Clicca per aggiungere la foto del tuo cane';
+        this.userMarker.bindPopup(popupText);
     }
 
     addPoop() {

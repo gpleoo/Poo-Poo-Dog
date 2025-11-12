@@ -10,13 +10,18 @@ body {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     overflow: hidden;
     height: 100vh;
+    height: 100dvh; /* Dynamic viewport height per mobile */
+    /* Supporto per iPhone notch */
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
 
 .app-container {
     display: flex;
     flex-direction: column;
     height: 100vh;
+    height: 100dvh; /* Dynamic viewport height per mobile */
     position: relative;
+    max-height: -webkit-fill-available; /* Fix per Safari mobile */
 }
 
 /* Header */
@@ -63,11 +68,13 @@ body {
 .controls {
     position: absolute;
     bottom: 30px;
+    bottom: max(30px, env(safe-area-inset-bottom, 30px)); /* Sicuro per iPhone */
     left: 50%;
     transform: translateX(-50%);
     display: flex;
     gap: 15px;
     z-index: 1000;
+    padding-bottom: env(safe-area-inset-bottom, 0px); /* Extra padding per iPhone */
 }
 
 button {
@@ -294,10 +301,19 @@ button:active {
 }
 
 /* Custom Leaflet Marker Styles */
+.custom-poop-marker {
+    z-index: 500 !important; /* Assicura che siano visibili sopra altri elementi */
+}
+
 .poop-marker {
     font-size: 2.5em;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-    animation: poopDrop 0.5s ease;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8),
+                 0 0 10px rgba(255, 255, 255, 0.5),
+                 0 0 20px rgba(255, 255, 255, 0.3);
+    animation: poopDrop 0.5s ease forwards;
+    display: block !important;
+    pointer-events: auto !important;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5));
 }
 
 @keyframes poopDrop {
@@ -357,6 +373,21 @@ button:active {
     }
 
     .controls {
-        bottom: 20px;
+        bottom: 80px; /* Più alto per evitare la barra del browser */
+        bottom: max(80px, calc(env(safe-area-inset-bottom, 0px) + 80px));
+    }
+
+    .info-toast {
+        bottom: 160px; /* Spostato più in alto per non sovrapporsi ai controlli */
+    }
+
+    /* Icone cacca più grandi su mobile */
+    .poop-marker {
+        font-size: 3em;
+    }
+
+    /* Header più compatto */
+    .app-header {
+        padding: 10px 15px;
     }
 }
