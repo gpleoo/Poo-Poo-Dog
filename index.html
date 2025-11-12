@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🐕 Poo-Poo Dog Tracker 💩</title>
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Bubblegum+Sans&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <h1 class="app-title">🐕 Poo-Poo Dog Tracker 💩</h1>
+            <div class="poop-counter">
+                Cacche trovate: <span id="poopCount">0</span> 💩
+            </div>
+        </header>
+
+        <!-- Map Container -->
+        <div id="map"></div>
+
+        <!-- Controls -->
+        <div class="controls">
+            <button id="addPoopBtn" class="btn-add-poop" title="Aggiungi cacca qui!">
+                <span class="btn-icon">💩</span>
+                <span class="btn-text">Cacca Qui!</span>
+            </button>
+
+            <button id="centerMapBtn" class="btn-center" title="Centra sulla tua posizione">
+                <span class="btn-icon">📍</span>
+            </button>
+
+            <button id="clearAllBtn" class="btn-clear" title="Cancella tutte le cacche">
+                <span class="btn-icon">🗑️</span>
+            </button>
+        </div>
+
+        <!-- Dog Photo Modal -->
+        <div id="dogPhotoModal" class="modal">
+            <div class="modal-content">
+                <h2>📸 Aggiungi la foto del tuo cane!</h2>
+                <div class="dog-photo-container">
+                    <div id="dogPhotoPreview" class="dog-photo-preview">
+                        <span class="placeholder-text">Clicca per aggiungere foto 🐕</span>
+                    </div>
+                    <input type="file" id="dogPhotoInput" accept="image/*" style="display: none;">
+                </div>
+                <button id="saveDogPhoto" class="btn-save">Salva Foto</button>
+                <button id="removeDogPhoto" class="btn-remove">Rimuovi Foto</button>
+            </div>
+        </div>
+
+        <!-- Info Toast -->
+        <div id="infoToast" class="info-toast">
+            <span id="toastMessage"></span>
+        </div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <!-- App JS -->
+    <script src="app.js"></script>
+</body>
+</html>
