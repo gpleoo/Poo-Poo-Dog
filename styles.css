@@ -1,0 +1,362 @@
+/* Reset e Base */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Fredoka', 'Comic Sans MS', cursive;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    overflow: hidden;
+    height: 100vh;
+}
+
+.app-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    position: relative;
+}
+
+/* Header */
+.app-header {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    padding: 15px 20px;
+    text-align: center;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    position: relative;
+}
+
+.app-title {
+    font-family: 'Bubblegum Sans', cursive;
+    font-size: 2em;
+    color: white;
+    text-shadow: 3px 3px 0px rgba(0, 0, 0, 0.2),
+                 -1px -1px 0px rgba(255, 255, 255, 0.3);
+    margin-bottom: 8px;
+    letter-spacing: 2px;
+}
+
+.poop-counter {
+    font-size: 1.2em;
+    color: #fff;
+    font-weight: 600;
+    background: rgba(255, 255, 255, 0.2);
+    display: inline-block;
+    padding: 5px 20px;
+    border-radius: 20px;
+    backdrop-filter: blur(10px);
+}
+
+/* Map */
+#map {
+    flex: 1;
+    width: 100%;
+    border: 5px solid #fff;
+    box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.2);
+    position: relative;
+}
+
+/* Controls */
+.controls {
+    position: absolute;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 15px;
+    z-index: 1000;
+}
+
+button {
+    font-family: 'Fredoka', cursive;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    outline: none;
+}
+
+button:active {
+    transform: scale(0.95);
+}
+
+.btn-add-poop {
+    background: linear-gradient(135deg, #8B4513 0%, #654321 100%);
+    color: white;
+    padding: 15px 30px;
+    border-radius: 50px;
+    font-size: 1.3em;
+    font-weight: 700;
+    box-shadow: 0 6px 20px rgba(139, 69, 19, 0.5),
+                inset 0 -3px 0 rgba(0, 0, 0, 0.3);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.btn-add-poop:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(139, 69, 19, 0.6);
+}
+
+.btn-icon {
+    font-size: 1.5em;
+    animation: bounce 1s infinite;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+}
+
+.btn-center, .btn-clear {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    font-size: 1.5em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.btn-center {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.btn-center:hover {
+    transform: scale(1.1);
+}
+
+.btn-clear {
+    background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+}
+
+.btn-clear:hover {
+    transform: scale(1.1) rotate(15deg);
+}
+
+/* Dog Photo Modal */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 2000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(5px);
+}
+
+.modal.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.modal-content {
+    background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+    padding: 30px;
+    border-radius: 30px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    text-align: center;
+    max-width: 400px;
+    width: 90%;
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.modal-content h2 {
+    color: #d53369;
+    font-size: 1.8em;
+    margin-bottom: 20px;
+    text-shadow: 2px 2px 0px rgba(255, 255, 255, 0.5);
+}
+
+.dog-photo-container {
+    margin: 20px 0;
+}
+
+.dog-photo-preview {
+    width: 200px;
+    height: 200px;
+    margin: 0 auto;
+    border-radius: 50%;
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    overflow: hidden;
+    border: 5px solid #fff;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+    transition: transform 0.3s ease;
+}
+
+.dog-photo-preview:hover {
+    transform: scale(1.05);
+}
+
+.dog-photo-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.placeholder-text {
+    color: #999;
+    font-size: 1.1em;
+    text-align: center;
+    padding: 20px;
+}
+
+.btn-save, .btn-remove {
+    padding: 12px 30px;
+    border-radius: 25px;
+    font-size: 1.1em;
+    font-weight: 600;
+    margin: 10px 5px;
+}
+
+.btn-save {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.btn-save:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+}
+
+.btn-remove {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(245, 87, 108, 0.4);
+}
+
+.btn-remove:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(245, 87, 108, 0.5);
+}
+
+/* Info Toast */
+.info-toast {
+    position: fixed;
+    bottom: 120px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 15px 30px;
+    border-radius: 25px;
+    font-size: 1.1em;
+    font-weight: 600;
+    z-index: 1500;
+    display: none;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.info-toast.show {
+    display: block;
+    animation: toastSlide 0.3s ease;
+}
+
+@keyframes toastSlide {
+    from {
+        transform: translateX(-50%) translateY(20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(-50%) translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Custom Leaflet Marker Styles */
+.poop-marker {
+    font-size: 2.5em;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    animation: poopDrop 0.5s ease;
+}
+
+@keyframes poopDrop {
+    0% {
+        transform: translateY(-100px) scale(0);
+        opacity: 0;
+    }
+    50% {
+        transform: translateY(10px) scale(1.1);
+    }
+    100% {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+    }
+}
+
+.dog-marker {
+    width: 80px !important;
+    height: 80px !important;
+    border-radius: 50%;
+    border: 5px solid #fff;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    }
+    50% {
+        transform: scale(1.05);
+        box-shadow: 0 6px 25px rgba(240, 147, 251, 0.7);
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .app-title {
+        font-size: 1.5em;
+    }
+
+    .poop-counter {
+        font-size: 1em;
+    }
+
+    .btn-add-poop {
+        padding: 12px 25px;
+        font-size: 1.1em;
+    }
+
+    .btn-center, .btn-clear {
+        width: 50px;
+        height: 50px;
+        font-size: 1.2em;
+    }
+
+    .controls {
+        bottom: 20px;
+    }
+}
