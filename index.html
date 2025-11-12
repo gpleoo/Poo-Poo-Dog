@@ -40,6 +40,10 @@
                 <span class="btn-icon">📍</span>
             </button>
 
+            <button id="filterBtn" class="btn-filter" title="Filtri e Statistiche">
+                <span class="btn-icon">📊</span>
+            </button>
+
             <button id="clearAllBtn" class="btn-clear" title="Cancella tutte le cacche">
                 <span class="btn-icon">🗑️</span>
             </button>
@@ -60,11 +64,178 @@
             </div>
         </div>
 
+        <!-- Poop Details Modal -->
+        <div id="poopDetailsModal" class="modal">
+            <div class="modal-content modal-details">
+                <h2>💩 Dettagli della Cacca</h2>
+                <form id="poopDetailsForm">
+                    <div class="form-group">
+                        <label>😊 Stato Generale</label>
+                        <select id="poopType" required>
+                            <option value="healthy">✅ Sana (Normale)</option>
+                            <option value="soft">⚠️ Morbida</option>
+                            <option value="diarrhea">💧 Diarrea</option>
+                            <option value="hard">🪨 Dura/Stitica</option>
+                            <option value="blood">🩸 Presenza di Sangue</option>
+                            <option value="mucus">🫧 Presenza di Muco</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>📏 Dimensione</label>
+                        <select id="poopSize">
+                            <option value="small">Piccola</option>
+                            <option value="medium" selected>Media</option>
+                            <option value="large">Grande</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>🎨 Colore</label>
+                        <select id="poopColor">
+                            <option value="normal" selected>Marrone Normale</option>
+                            <option value="light">Chiaro</option>
+                            <option value="dark">Scuro</option>
+                            <option value="green">Verdastro</option>
+                            <option value="yellow">Giallastro</option>
+                            <option value="red">Rossastro</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>👃 Odore</label>
+                        <select id="poopSmell">
+                            <option value="normal" selected>Normale</option>
+                            <option value="strong">Molto Forte</option>
+                            <option value="unusual">Insolito</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>📝 Note (opzionale)</label>
+                        <textarea id="poopNotes" placeholder="Es: Il cane sembrava a disagio, ultimo pasto 3 ore fa..."></textarea>
+                    </div>
+
+                    <div class="form-buttons">
+                        <button type="submit" class="btn-save">💾 Salva Cacca</button>
+                        <button type="button" id="cancelPoopDetails" class="btn-remove">✖️ Annulla</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Filters & Stats Modal -->
+        <div id="filtersModal" class="modal">
+            <div class="modal-content modal-filters">
+                <h2>📊 Filtri e Statistiche</h2>
+
+                <div class="stats-summary">
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalPoops">0</div>
+                        <div class="stat-label">Totale Cacche</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="healthyPoops">0</div>
+                        <div class="stat-label">Sane ✅</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="problemPoops">0</div>
+                        <div class="stat-label">Problemi ⚠️</div>
+                    </div>
+                </div>
+
+                <div class="filters-section">
+                    <h3>🔍 Filtra per:</h3>
+
+                    <div class="form-group">
+                        <label>📅 Periodo</label>
+                        <select id="filterPeriod">
+                            <option value="all">Tutte</option>
+                            <option value="today">Oggi</option>
+                            <option value="yesterday">Ieri</option>
+                            <option value="week">Ultima Settimana</option>
+                            <option value="month">Ultimo Mese</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>🩺 Stato</label>
+                        <select id="filterType">
+                            <option value="all">Tutti</option>
+                            <option value="healthy">Solo Sane ✅</option>
+                            <option value="soft">Solo Morbide ⚠️</option>
+                            <option value="diarrhea">Solo Diarrea 💧</option>
+                            <option value="blood">Con Sangue 🩸</option>
+                            <option value="mucus">Con Muco 🫧</option>
+                        </select>
+                    </div>
+
+                    <div class="form-buttons">
+                        <button id="applyFilters" class="btn-save">✔️ Applica Filtri</button>
+                        <button id="resetFilters" class="btn-remove">🔄 Reset</button>
+                        <button id="closeFilters" class="btn-secondary">✖️ Chiudi</button>
+                    </div>
+                </div>
+
+                <div class="recent-poops">
+                    <h3>📋 Ultime Cacche</h3>
+                    <div id="recentPoopsList"></div>
+                </div>
+            </div>
+        </div>
+
         <!-- Info Toast -->
         <div id="infoToast" class="info-toast">
             <span id="toastMessage"></span>
         </div>
     </div>
+
+    <!-- SVG Icons (hidden) -->
+    <svg style="display: none;">
+        <defs>
+            <!-- Happy Poop -->
+            <symbol id="poop-happy" viewBox="0 0 100 100">
+                <ellipse cx="50" cy="70" rx="35" ry="30" fill="#8B4513"/>
+                <ellipse cx="50" cy="50" rx="30" ry="25" fill="#8B4513"/>
+                <ellipse cx="50" cy="30" rx="20" ry="18" fill="#8B4513"/>
+                <!-- Eyes -->
+                <circle cx="40" cy="45" r="4" fill="white"/>
+                <circle cx="60" cy="45" r="4" fill="white"/>
+                <circle cx="41" cy="44" r="2" fill="black"/>
+                <circle cx="61" cy="44" r="2" fill="black"/>
+                <!-- Smile -->
+                <path d="M 38 55 Q 50 62 62 55" stroke="white" stroke-width="2" fill="none" stroke-linecap="round"/>
+            </symbol>
+
+            <!-- Sad Poop -->
+            <symbol id="poop-sad" viewBox="0 0 100 100">
+                <ellipse cx="50" cy="70" rx="35" ry="30" fill="#654321"/>
+                <ellipse cx="50" cy="50" rx="30" ry="25" fill="#654321"/>
+                <ellipse cx="50" cy="30" rx="20" ry="18" fill="#654321"/>
+                <!-- Eyes -->
+                <circle cx="40" cy="45" r="4" fill="white"/>
+                <circle cx="60" cy="45" r="4" fill="white"/>
+                <circle cx="41" cy="44" r="2" fill="black"/>
+                <circle cx="61" cy="44" r="2" fill="black"/>
+                <!-- Sad mouth -->
+                <path d="M 38 60 Q 50 53 62 60" stroke="white" stroke-width="2" fill="none" stroke-linecap="round"/>
+            </symbol>
+
+            <!-- Sick Poop -->
+            <symbol id="poop-sick" viewBox="0 0 100 100">
+                <ellipse cx="50" cy="70" rx="35" ry="30" fill="#9b7653"/>
+                <ellipse cx="50" cy="50" rx="30" ry="25" fill="#9b7653"/>
+                <ellipse cx="50" cy="30" rx="20" ry="18" fill="#9b7653"/>
+                <!-- Eyes X_X -->
+                <line x1="37" y1="42" x2="43" y2="48" stroke="black" stroke-width="2"/>
+                <line x1="43" y1="42" x2="37" y2="48" stroke="black" stroke-width="2"/>
+                <line x1="57" y1="42" x2="63" y2="48" stroke="black" stroke-width="2"/>
+                <line x1="63" y1="42" x2="57" y2="48" stroke="black" stroke-width="2"/>
+                <!-- Wavy mouth -->
+                <path d="M 38 57 Q 44 54 50 57 Q 56 60 62 57" stroke="black" stroke-width="2" fill="none"/>
+            </symbol>
+        </defs>
+    </svg>
 
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>

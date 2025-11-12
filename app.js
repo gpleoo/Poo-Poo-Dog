@@ -1,4 +1,4 @@
-// Poo-Poo Dog Tracker App
+// Poo-Poo Dog Tracker App - Enhanced Version
 class PoopTracker {
     constructor() {
         this.map = null;
@@ -8,40 +8,31 @@ class PoopTracker {
         this.poopMarkers = [];
         this.dogPhoto = null;
         this.watchId = null;
+        this.activeFilters = { period: 'all', type: 'all' };
+        this.pendingPoopData = null;
 
         this.init();
     }
 
     init() {
-        // Inizializza la mappa
         this.initMap();
-
-        // Carica dati salvati
         this.loadSavedData();
-
-        // Inizializza geolocalizzazione
         this.initGeolocation();
-
-        // Setup event listeners
         this.setupEventListeners();
-
-        // Aggiorna il contatore
         this.updatePoopCounter();
+        this.updateStats();
     }
 
     initMap() {
-        // Crea la mappa centrata su una posizione di default
         this.map = L.map('map', {
             zoomControl: true,
             attributionControl: false
-        }).setView([45.4642, 9.1900], 13); // Milano come default
+        }).setView([45.4642, 9.1900], 13);
 
-        // Aggiungi tile layer con stile cartoon-like
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
         }).addTo(this.map);
 
-        // Personalizza lo zoom control
         this.map.zoomControl.setPosition('topright');
     }
 
@@ -51,7 +42,6 @@ class PoopTracker {
             return;
         }
 
-        // Richiedi la posizione corrente
         navigator.geolocation.getCurrentPosition(
             (position) => {
                 this.userPosition = {
@@ -72,7 +62,6 @@ class PoopTracker {
             }
         );
 
-        // Tracking continuo della posizione
         this.watchId = navigator.geolocation.watchPosition(
             (position) => {
                 this.userPosition = {
@@ -95,12 +84,10 @@ class PoopTracker {
     updateUserMarker() {
         if (!this.userPosition) return;
 
-        // Rimuovi il marker precedente
         if (this.userMarker) {
             this.map.removeLayer(this.userMarker);
         }
 
-        // Crea icona personalizzata per l'utente
         const iconHtml = this.dogPhoto
             ? `<div class="dog-marker" style="background-image: url('${this.dogPhoto}'); background-size: cover; background-position: center;"></div>`
             : `<div class="dog-marker" style="display: flex; align-items: center; justify-content: center; font-size: 2em;">🐕</div>`;
@@ -112,22 +99,51 @@ class PoopTracker {
             iconAnchor: [40, 40]
         });
 
-        // Aggiungi nuovo marker
         this.userMarker = L.marker([this.userPosition.lat, this.userPosition.lng], {
             icon: userIcon,
             zIndexOffset: 1000
         }).addTo(this.map);
 
-        // Aggiungi evento click per cambiare la foto
         this.userMarker.on('click', () => {
             this.openDogPhotoModal();
         });
 
-        // Aggiungi popup (ma non aprirlo automaticamente)
         const popupText = this.dogPhoto
             ? '<b>🐕 Tu e il tuo cane siete qui!</b><br>Clicca per cambiare la foto'
             : '<b>🐕 Tu e il tuo cane siete qui!</b><br>Clicca per aggiungere la foto del tuo cane';
         this.userMarker.bindPopup(popupText);
+    }
+
+    // Anti-sovrapposizione: trova una posizione libera vicina
+    findNearbyFreePosition(lat, lng) {
+        const MIN_DISTANCE = 0.00003; // ~3 metri
+        const MAX_ATTEMPTS = 8;
+
+        for (let i = 0; i < MAX_ATTEMPTS; i++) {
+            let testLat = lat;
+            let testLng = lng;
+
+            if (i > 0) {
+                const angle = (i / MAX_ATTEMPTS) * 2 * Math.PI;
+                const distance = MIN_DISTANCE * (1 + i * 0.3);
+                testLat += Math.cos(angle) * distance;
+                testLng += Math.sin(angle) * distance;
+            }
+
+            const isFree = !this.poops.some(p => {
+                const dist = Math.sqrt(
+                    Math.pow(p.lat - testLat, 2) +
+                    Math.pow(p.lng - testLng, 2)
+                );
+                return dist < MIN_DISTANCE;
+            });
+
+            if (isFree) {
+                return { lat: testLat, lng: testLng };
+            }
+        }
+
+        return { lat, lng };
     }
 
     addPoop() {
@@ -136,37 +152,65 @@ class PoopTracker {
             return;
         }
 
+        // Trova posizione libera
+        const position = this.findNearbyFreePosition(
+            this.userPosition.lat,
+            this.userPosition.lng
+        );
+
+        this.pendingPoopData = {
+            lat: position.lat,
+            lng: position.lng,
+            timestamp: new Date().toISOString()
+        };
+
+        this.openPoopDetailsModal();
+    }
+
+    savePoopWithDetails(details) {
+        if (!this.pendingPoopData) return;
+
         const poop = {
             id: Date.now(),
-            lat: this.userPosition.lat,
-            lng: this.userPosition.lng,
-            timestamp: new Date().toISOString()
+            ...this.pendingPoopData,
+            ...details
         };
 
         this.poops.push(poop);
         this.addPoopMarker(poop);
         this.saveData();
         this.updatePoopCounter();
-        this.showToast('💩 Cacca aggiunta con successo!');
+        this.updateStats();
+        this.showToast('💩 Cacca registrata con successo!');
+
+        this.pendingPoopData = null;
+    }
+
+    getPoopIcon(type) {
+        // Sceglie l'icona SVG in base allo stato
+        if (type === 'healthy') {
+            return 'poop-happy';
+        } else if (type === 'blood' || type === 'mucus') {
+            return 'poop-sick';
+        } else {
+            return 'poop-sad';
+        }
     }
 
     addPoopMarker(poop) {
-        // Emoji casuali per variare le cacche
-        const poopEmojis = ['💩', '💩', '💩', '🧻', '🌰'];
-        const emoji = poopEmojis[Math.floor(Math.random() * poopEmojis.length)];
+        const iconName = this.getPoopIcon(poop.type);
 
         const poopIcon = L.divIcon({
-            html: `<div class="poop-marker">${emoji}</div>`,
+            html: `<svg class="poop-svg-icon"><use href="#${iconName}"></use></svg>`,
             className: 'custom-poop-marker',
-            iconSize: [40, 40],
-            iconAnchor: [20, 20]
+            iconSize: [50, 50],
+            iconAnchor: [25, 25]
         });
 
         const marker = L.marker([poop.lat, poop.lng], {
             icon: poopIcon
         }).addTo(this.map);
 
-        // Aggiungi popup con informazioni
         const date = new Date(poop.timestamp);
         const dateStr = date.toLocaleDateString('it-IT', {
             day: '2-digit',
@@ -176,9 +220,25 @@ class PoopTracker {
             minute: '2-digit'
         });
 
+        const typeLabels = {
+            healthy: '✅ Sana',
+            soft: '⚠️ Morbida',
+            diarrhea: '💧 Diarrea',
+            hard: '🪨 Dura',
+            blood: '🩸 Con Sangue',
+            mucus: '🫧 Con Muco'
+        };
+
         marker.bindPopup(`
             <div style="text-align: center; font-family: 'Fredoka', cursive;">
-                <b>💩 Cacca del cane!</b><br>
+                <b>💩 Dettagli Cacca</b><br>
+                <div style="margin: 10px 0; text-align: left;">
+                    <b>Stato:</b> ${typeLabels[poop.type] || poop.type}<br>
+                    <b>Dimensione:</b> ${poop.size}<br>
+                    <b>Colore:</b> ${poop.color}<br>
+                    <b>Odore:</b> ${poop.smell}<br>
+                    ${poop.notes ? `<b>Note:</b> ${poop.notes}<br>` : ''}
+                </div>
                 📅 ${dateStr}<br>
                 <button onclick="app.deletePoop(${poop.id})" style="
                     margin-top: 10px;
@@ -198,10 +258,8 @@ class PoopTracker {
     }
 
     deletePoop(poopId) {
-        // Rimuovi dalla lista
         this.poops = this.poops.filter(p => p.id !== poopId);
 
-        // Rimuovi marker dalla mappa
         const poopMarker = this.poopMarkers.find(pm => pm.id === poopId);
         if (poopMarker) {
             this.map.removeLayer(poopMarker.marker);
@@ -210,7 +268,9 @@ class PoopTracker {
 
         this.saveData();
         this.updatePoopCounter();
+        this.updateStats();
         this.showToast('🗑️ Cacca rimossa!');
+        this.updateRecentPoopsList();
     }
 
     clearAllPoops() {
@@ -220,7 +280,6 @@ class PoopTracker {
         }
 
         if (confirm(`Sei sicuro di voler rimuovere tutte le ${this.poops.length} cacche? 💩`)) {
-            // Rimuovi tutti i marker
             this.poopMarkers.forEach(pm => {
                 this.map.removeLayer(pm.marker);
             });
@@ -229,7 +288,9 @@ class PoopTracker {
             this.poopMarkers = [];
             this.saveData();
             this.updatePoopCounter();
+            this.updateStats();
             this.showToast('✨ Tutte le cacche sono state rimosse!');
+            this.updateRecentPoopsList();
         }
     }
 
@@ -250,11 +311,170 @@ class PoopTracker {
         document.getElementById('poopCount').textContent = this.poops.length;
     }
 
+    updateStats() {
+        const totalPoops = this.poops.length;
+        const healthyPoops = this.poops.filter(p => p.type === 'healthy').length;
+        const problemPoops = this.poops.filter(p =>
+            ['diarrhea', 'blood', 'mucus'].includes(p.type)
+        ).length;
+
+        document.getElementById('totalPoops').textContent = totalPoops;
+        document.getElementById('healthyPoops').textContent = healthyPoops;
+        document.getElementById('problemPoops').textContent = problemPoops;
+    }
+
+    // Filtri
+    applyFilters() {
+        const period = document.getElementById('filterPeriod').value;
+        const type = document.getElementById('filterType').value;
+
+        this.activeFilters = { period, type };
+
+        // Rimuovi tutti i marker
+        this.poopMarkers.forEach(pm => {
+            this.map.removeLayer(pm.marker);
+        });
+        this.poopMarkers = [];
+
+        // Filtra e riaggi marker
+        const filteredPoops = this.getFilteredPoops();
+        filteredPoops.forEach(poop => {
+            this.addPoopMarker(poop);
+        });
+
+        this.showToast(`📊 Filtri applicati: ${filteredPoops.length} cacche visualizzate`);
+        this.updateRecentPoopsList();
+    }
+
+    getFilteredPoops() {
+        let filtered = [...this.poops];
+
+        // Filtro periodo
+        if (this.activeFilters.period !== 'all') {
+            const now = new Date();
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+            filtered = filtered.filter(p => {
+                const poopDate = new Date(p.timestamp);
+                const poopDay = new Date(poopDate.getFullYear(), poopDate.getMonth(), poopDate.getDate());
+
+                switch(this.activeFilters.period) {
+                    case 'today':
+                        return poopDay.getTime() === today.getTime();
+                    case 'yesterday':
+                        const yesterday = new Date(today);
+                        yesterday.setDate(yesterday.getDate() - 1);
+                        return poopDay.getTime() === yesterday.getTime();
+                    case 'week':
+                        const weekAgo = new Date(today);
+                        weekAgo.setDate(weekAgo.getDate() - 7);
+                        return poopDate >= weekAgo;
+                    case 'month':
+                        const monthAgo = new Date(today);
+                        monthAgo.setMonth(monthAgo.getMonth() - 1);
+                        return poopDate >= monthAgo;
+                    default:
+                        return true;
+                }
+            });
+        }
+
+        // Filtro tipo
+        if (this.activeFilters.type !== 'all') {
+            filtered = filtered.filter(p => p.type === this.activeFilters.type);
+        }
+
+        return filtered;
+    }
+
+    resetFilters() {
+        this.activeFilters = { period: 'all', type: 'all' };
+        document.getElementById('filterPeriod').value = 'all';
+        document.getElementById('filterType').value = 'all';
+        this.applyFilters();
+    }
+
+    updateRecentPoopsList() {
+        const list = document.getElementById('recentPoopsList');
+        const filteredPoops = this.getFilteredPoops();
+        const recentPoops = filteredPoops.slice(-10).reverse();
+
+        if (recentPoops.length === 0) {
+            list.innerHTML = '<p style="text-align: center; color: #666;">Nessuna cacca registrata</p>';
+            return;
+        }
+
+        const typeLabels = {
+            healthy: '✅ Sana',
+            soft: '⚠️ Morbida',
+            diarrhea: '💧 Diarrea',
+            hard: '🪨 Dura',
+            blood: '🩸 Con Sangue',
+            mucus: '🫧 Con Muco'
+        };
+
+        list.innerHTML = recentPoops.map(poop => {
+            const date = new Date(poop.timestamp);
+            const dateStr = date.toLocaleDateString('it-IT', {
+                day: '2-digit',
+                month: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+
+            return `
+                <div class="poop-list-item">
+                    <div class="poop-item-info">
+                        <div class="poop-item-date">${dateStr}</div>
+                        <div class="poop-item-status">${typeLabels[poop.type]}</div>
+                    </div>
+                    <div class="poop-item-actions">
+                        <button class="btn-small" onclick="app.centerOnPoop(${poop.id})">📍</button>
+                        <button class="btn-small" onclick="app.deletePoop(${poop.id})">🗑️</button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    centerOnPoop(poopId) {
+        const poop = this.poops.find(p => p.id === poopId);
+        if (poop) {
+            this.map.setView([poop.lat, poop.lng], 18, { animate: true });
+            const marker = this.poopMarkers.find(pm => pm.id === poopId);
+            if (marker) {
+                marker.marker.openPopup();
+            }
+            this.closeFiltersModal();
+        }
+    }
+
+    // Modal Management
+    openPoopDetailsModal() {
+        document.getElementById('poopDetailsModal').classList.add('active');
+        // Reset form
+        document.getElementById('poopDetailsForm').reset();
+    }
+
+    closePoopDetailsModal() {
+        document.getElementById('poopDetailsModal').classList.remove('active');
+        this.pendingPoopData = null;
+    }
+
+    openFiltersModal() {
+        document.getElementById('filtersModal').classList.add('active');
+        this.updateStats();
+        this.updateRecentPoopsList();
+    }
+
+    closeFiltersModal() {
+        document.getElementById('filtersModal').classList.remove('active');
+    }
+
     openDogPhotoModal() {
         const modal = document.getElementById('dogPhotoModal');
         modal.classList.add('active');
 
-        // Mostra foto corrente se esiste
         const preview = document.getElementById('dogPhotoPreview');
         if (this.dogPhoto) {
             preview.innerHTML = `<img src="${this.dogPhoto}" alt="Dog Photo">`;
@@ -264,8 +484,7 @@ class PoopTracker {
     }
 
     closeDogPhotoModal() {
-        const modal = document.getElementById('dogPhotoModal');
-        modal.classList.remove('active');
+        document.getElementById('dogPhotoModal').classList.remove('active');
     }
 
     setupEventListeners() {
@@ -279,9 +498,47 @@ class PoopTracker {
             this.centerOnUser();
         });
 
+        // Bottone filtri
+        document.getElementById('filterBtn').addEventListener('click', () => {
+            this.openFiltersModal();
+        });
+
         // Bottone cancella tutto
         document.getElementById('clearAllBtn').addEventListener('click', () => {
             this.clearAllPoops();
+        });
+
+        // Form dettagli cacca
+        document.getElementById('poopDetailsForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const details = {
+                type: document.getElementById('poopType').value,
+                size: document.getElementById('poopSize').value,
+                color: document.getElementById('poopColor').value,
+                smell: document.getElementById('poopSmell').value,
+                notes: document.getElementById('poopNotes').value.trim()
+            };
+
+            this.savePoopWithDetails(details);
+            this.closePoopDetailsModal();
+        });
+
+        document.getElementById('cancelPoopDetails').addEventListener('click', () => {
+            this.closePoopDetailsModal();
+        });
+
+        // Filtri modal
+        document.getElementById('applyFilters').addEventListener('click', () => {
+            this.applyFilters();
+        });
+
+        document.getElementById('resetFilters').addEventListener('click', () => {
+            this.resetFilters();
+        });
+
+        document.getElementById('closeFilters').addEventListener('click', () => {
+            this.closeFiltersModal();
         });
 
         // Modal foto cane
@@ -317,7 +574,6 @@ class PoopTracker {
                 };
                 reader.readAsDataURL(file);
             } else if (this.dogPhoto) {
-                // Se c'è già una foto salvata, chiudi semplicemente
                 this.closeDogPhotoModal();
             } else {
                 this.showToast('⚠️ Seleziona prima una foto!');
@@ -333,10 +589,12 @@ class PoopTracker {
         });
 
         // Chiudi modal cliccando fuori
-        document.getElementById('dogPhotoModal').addEventListener('click', (e) => {
-            if (e.target.id === 'dogPhotoModal') {
-                this.closeDogPhotoModal();
-            }
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target.classList.contains('modal')) {
+                    modal.classList.remove('active');
+                }
+            });
         });
     }
 
