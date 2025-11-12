@@ -20,9 +20,14 @@
     <div class="app-container">
         <!-- Header -->
         <header class="app-header">
-            <h1 class="app-title">🐕 Poo-Poo Dog Tracker 💩</h1>
-            <div class="poop-counter">
-                Cacche trovate: <span id="poopCount">0</span> 💩
+            <button id="dogProfileBtn" class="btn-dog-profile" title="Profilo Cane">
+                🐕
+            </button>
+            <div class="header-content">
+                <h1 class="app-title" id="appTitle">🐕 Poo-Poo Dog Tracker 💩</h1>
+                <div class="poop-counter">
+                    Cacche trovate: <span id="poopCount">0</span> 💩
+                </div>
             </div>
         </header>
 
@@ -112,8 +117,26 @@
                     </div>
 
                     <div class="form-group">
+                        <label>🍖 Ultimo Cibo Mangiato</label>
+                        <input type="text" id="poopFood" list="foodSuggestions" placeholder="Es: Crocchette al pollo, carne cruda...">
+                        <datalist id="foodSuggestions"></datalist>
+                    </div>
+
+                    <div class="form-group">
+                        <label>⏰ Ore dal Pasto</label>
+                        <input type="number" id="poopHoursSinceMeal" placeholder="Es: 3" min="0" step="0.5">
+                    </div>
+
+                    <div class="form-group">
                         <label>📝 Note (opzionale)</label>
-                        <textarea id="poopNotes" placeholder="Es: Il cane sembrava a disagio, ultimo pasto 3 ore fa..."></textarea>
+                        <select id="savedNotes" class="note-selector">
+                            <option value="">Seleziona nota salvata o scrivi nuova...</option>
+                        </select>
+                        <textarea id="poopNotes" placeholder="Es: Il cane sembrava a disagio, respirava affannosamente..."></textarea>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="saveNote">
+                            Salva questa nota per riutilizzarla in futuro
+                        </label>
                     </div>
 
                     <div class="form-buttons">
@@ -170,6 +193,13 @@
                         </select>
                     </div>
 
+                    <div class="form-group">
+                        <label>🍖 Cibo Mangiato</label>
+                        <select id="filterFood">
+                            <option value="all">Tutti i Cibi</option>
+                        </select>
+                    </div>
+
                     <div class="form-buttons">
                         <button id="applyFilters" class="btn-save">✔️ Applica Filtri</button>
                         <button id="resetFilters" class="btn-remove">🔄 Reset</button>
@@ -181,6 +211,126 @@
                     <h3>📋 Ultime Cacche</h3>
                     <div id="recentPoopsList"></div>
                 </div>
+            </div>
+        </div>
+
+        <!-- Dog Profile Modal -->
+        <div id="dogProfileModal" class="modal">
+            <div class="modal-content modal-profile">
+                <h2>🐕 Profilo del Cane</h2>
+                <form id="dogProfileForm">
+                    <div class="profile-section">
+                        <h3>📋 Informazioni Generali</h3>
+
+                        <div class="form-group">
+                            <label>🏷️ Nome del Cane</label>
+                            <input type="text" id="dogName" placeholder="Es: Bobby" required>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>🎂 Data di Nascita</label>
+                                <input type="date" id="dogBirthdate">
+                            </div>
+                            <div class="form-group">
+                                <label>⚖️ Peso (kg)</label>
+                                <input type="number" id="dogWeight" placeholder="Es: 15" step="0.1" min="0">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>🐾 Razza</label>
+                                <input type="text" id="dogBreed" placeholder="Es: Labrador, Meticcio...">
+                            </div>
+                            <div class="form-group">
+                                <label>⚧️ Sesso</label>
+                                <select id="dogGender">
+                                    <option value="">Non specificato</option>
+                                    <option value="male">Maschio</option>
+                                    <option value="female">Femmina</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>🎨 Colore Mantello</label>
+                                <input type="text" id="dogColor" placeholder="Es: Marrone, Bianco e nero...">
+                            </div>
+                            <div class="form-group">
+                                <label>💳 Microchip</label>
+                                <input type="text" id="dogMicrochip" placeholder="Es: 380260000000000">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="profile-section">
+                        <h3>🏥 Salute</h3>
+
+                        <div class="form-group">
+                            <label>🩺 Malattie Croniche</label>
+                            <textarea id="dogChronicDiseases" placeholder="Es: Displasia dell'anca, artrite..."></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label>🍎 Allergie Alimentari</label>
+                            <textarea id="dogFoodAllergies" placeholder="Es: Pollo, glutine, latticini..."></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label>💊 Allergie Farmaci</label>
+                            <textarea id="dogMedicineAllergies" placeholder="Es: Penicillina, cortisone..."></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label>💊 Farmaci in Corso</label>
+                            <textarea id="dogCurrentMedicine" placeholder="Es: Antidolorifico 1 volta/giorno..."></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label>🩹 Interventi Chirurgici Passati</label>
+                            <textarea id="dogSurgeries" placeholder="Es: Sterilizzazione (2020), rimozione tumore (2022)..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="profile-section">
+                        <h3>👨‍⚕️ Veterinario</h3>
+
+                        <div class="form-group">
+                            <label>🏥 Nome Clinica/Veterinario</label>
+                            <input type="text" id="vetName" placeholder="Es: Clinica Veterinaria San Marco">
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>📞 Telefono</label>
+                                <input type="tel" id="vetPhone" placeholder="Es: +39 02 1234567">
+                            </div>
+                            <div class="form-group">
+                                <label>📧 Email</label>
+                                <input type="email" id="vetEmail" placeholder="Es: info@clinicavet.it">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>📍 Indirizzo</label>
+                            <input type="text" id="vetAddress" placeholder="Es: Via Roma 123, Milano">
+                        </div>
+                    </div>
+
+                    <div class="profile-section">
+                        <h3>📝 Note Generali</h3>
+                        <div class="form-group">
+                            <textarea id="dogGeneralNotes" placeholder="Es: Ha paura dei fuochi d'artificio, adora giocare con la palla..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="form-buttons">
+                        <button type="submit" class="btn-save">💾 Salva Profilo</button>
+                        <button type="button" id="cancelDogProfile" class="btn-secondary">✖️ Chiudi</button>
+                    </div>
+                </form>
             </div>
         </div>
 

@@ -596,6 +596,104 @@ button:active {
     filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
 }
 
+/* Dog Profile Button */
+.btn-dog-profile {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    font-size: 1.8em;
+    background: rgba(255, 255, 255, 0.3);
+    border: 3px solid white;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    z-index: 10;
+}
+
+.btn-dog-profile:hover {
+    transform: translateY(-50%) scale(1.1);
+    background: rgba(255, 255, 255, 0.5);
+}
+
+.header-content {
+    flex: 1;
+}
+
+/* Dog Profile Modal */
+.modal-profile {
+    max-width: 700px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.profile-section {
+    background: rgba(255, 255, 255, 0.5);
+    padding: 20px;
+    border-radius: 20px;
+    margin-bottom: 20px;
+}
+
+.profile-section h3 {
+    color: #d53369;
+    margin-bottom: 15px;
+    font-size: 1.3em;
+    border-bottom: 3px solid white;
+    padding-bottom: 10px;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.form-group input[type="text"],
+.form-group input[type="number"],
+.form-group input[type="date"],
+.form-group input[type="tel"],
+.form-group input[type="email"] {
+    width: 100%;
+    padding: 12px;
+    border: 3px solid #fff;
+    border-radius: 15px;
+    font-family: 'Fredoka', cursive;
+    font-size: 1em;
+    background: white;
+    box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+}
+
+/* Note Selector */
+.note-selector {
+    margin-bottom: 10px;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+    font-size: 0.95em;
+    color: #666;
+    cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+}
+
 /* Mobile Responsive for New Elements */
 @media (max-width: 768px) {
     .stats-summary {
@@ -622,5 +720,25 @@ button:active {
 
     .form-buttons button {
         width: 100%;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .modal-profile {
+        width: 95%;
+        max-height: 95vh;
+    }
+
+    .profile-section {
+        padding: 15px;
+    }
+
+    .btn-dog-profile {
+        width: 40px;
+        height: 40px;
+        font-size: 1.4em;
+        left: 10px;
     }
 }

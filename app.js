@@ -1,4 +1,4 @@
-// Poo-Poo Dog Tracker App - Enhanced Version
+// Poo-Poo Dog Tracker App - Complete Version with Dog Profile
 class PoopTracker {
     constructor() {
         this.map = null;
@@ -7,9 +7,13 @@ class PoopTracker {
         this.poops = [];
         this.poopMarkers = [];
         this.dogPhoto = null;
+        this.dogProfile = {};
+        this.savedNotes = [];
+        this.foodHistory = [];
         this.watchId = null;
-        this.activeFilters = { period: 'all', type: 'all' };
+        this.activeFilters = { period: 'all', type: 'all', food: 'all' };
         this.pendingPoopData = null;
+        this.isFirstTime = true;
 
         this.init();
     }
@@ -21,6 +25,15 @@ class PoopTracker {
         this.setupEventListeners();
         this.updatePoopCounter();
         this.updateStats();
+        this.updateDogName();
+
+        // Apri profilo cane se è la prima volta
+        if (this.isFirstTime && !this.dogProfile.name) {
+            setTimeout(() => {
+                this.openDogProfileModal();
+                this.showToast('👋 Benvenuto! Inserisci i dati del tuo cane per iniziare');
+            }, 1000);
+        }
     }
 
     initMap() {
@@ -108,15 +121,15 @@ class PoopTracker {
             this.openDogPhotoModal();
         });
 
+        const dogName = this.dogProfile.name || 'il tuo cane';
         const popupText = this.dogPhoto
-            ? '<b>🐕 Tu e il tuo cane siete qui!</b><br>Clicca per cambiare la foto'
-            : '<b>🐕 Tu e il tuo cane siete qui!</b><br>Clicca per aggiungere la foto del tuo cane';
+            ? `<b>🐕 Tu e ${dogName} siete qui!</b><br>Clicca per cambiare la foto`
+            : `<b>🐕 Tu e ${dogName} siete qui!</b><br>Clicca per aggiungere la foto`;
         this.userMarker.bindPopup(popupText);
     }
 
-    // Anti-sovrapposizione: trova una posizione libera vicina
     findNearbyFreePosition(lat, lng) {
-        const MIN_DISTANCE = 0.00003; // ~3 metri
+        const MIN_DISTANCE = 0.00003;
         const MAX_ATTEMPTS = 8;
 
         for (let i = 0; i < MAX_ATTEMPTS; i++) {
@@ -152,7 +165,6 @@ class PoopTracker {
             return;
         }
 
-        // Trova posizione libera
         const position = this.findNearbyFreePosition(
             this.userPosition.lat,
             this.userPosition.lng
@@ -177,17 +189,24 @@ class PoopTracker {
         };
 
         this.poops.push(poop);
+
+        // Salva cibo nella history
+        if (details.food && details.food.trim() && !this.foodHistory.includes(details.food.trim())) {
+            this.foodHistory.push(details.food.trim());
+        }
+
         this.addPoopMarker(poop);
         this.saveData();
         this.updatePoopCounter();
         this.updateStats();
+        this.updateFoodSuggestions();
+        this.updateFoodFilter();
         this.showToast('💩 Cacca registrata con successo!');
 
         this.pendingPoopData = null;
     }
 
     getPoopIcon(type) {
-        // Sceglie l'icona SVG in base allo stato
         if (type === 'healthy') {
             return 'poop-happy';
         } else if (type === 'blood' || type === 'mucus') {
@@ -229,15 +248,26 @@ class PoopTracker {
             mucus: '🫧 Con Muco'
         };
 
-        marker.bindPopup(`
+        let popupContent = `
             <div style="text-align: center; font-family: 'Fredoka', cursive;">
                 <b>💩 Dettagli Cacca</b><br>
-                <div style="margin: 10px 0; text-align: left;">
+                <div style="margin: 10px 0; text-align: left; font-size: 0.95em;">
                     <b>Stato:</b> ${typeLabels[poop.type] || poop.type}<br>
                     <b>Dimensione:</b> ${poop.size}<br>
                     <b>Colore:</b> ${poop.color}<br>
-                    <b>Odore:</b> ${poop.smell}<br>
-                    ${poop.notes ? `<b>Note:</b> ${poop.notes}<br>` : ''}
+                    <b>Odore:</b> ${poop.smell}<br>`;
+
+        if (poop.food) {
+            popupContent += `<b>🍖 Cibo:</b> ${poop.food}<br>`;
+        }
+        if (poop.hoursSinceMeal) {
+            popupContent += `<b>⏰ Ore dal pasto:</b> ${poop.hoursSinceMeal}h<br>`;
+        }
+        if (poop.notes) {
+            popupContent += `<b>Note:</b> ${poop.notes}<br>`;
+        }
+
+        popupContent += `
                 </div>
                 📅 ${dateStr}<br>
                 <button onclick="app.deletePoop(${poop.id})" style="
@@ -252,8 +282,9 @@ class PoopTracker {
                     font-weight: 600;
                 ">🗑️ Rimuovi</button>
             </div>
-        `);
+        `;
 
+        marker.bindPopup(popupContent);
         this.poopMarkers.push({ id: poop.id, marker: marker });
     }
 
@@ -279,7 +310,8 @@ class PoopTracker {
             return;
         }
 
-        if (confirm(`Sei sicuro di voler rimuovere tutte le ${this.poops.length} cacche? 💩`)) {
+        const dogName = this.dogProfile.name || 'il cane';
+        if (confirm(`Sei sicuro di voler rimuovere tutte le ${this.poops.length} cacche di ${dogName}? 💩`)) {
             this.poopMarkers.forEach(pm => {
                 this.map.removeLayer(pm.marker);
             });
@@ -311,6 +343,13 @@ class PoopTracker {
         document.getElementById('poopCount').textContent = this.poops.length;
     }
 
+    updateDogName() {
+        if (this.dogProfile.name) {
+            const title = document.getElementById('appTitle');
+            title.textContent = `🐕 ${this.dogProfile.name} - Poo Tracker 💩`;
+        }
+    }
+
     updateStats() {
         const totalPoops = this.poops.length;
         const healthyPoops = this.poops.filter(p => p.type === 'healthy').length;
@@ -323,20 +362,47 @@ class PoopTracker {
         document.getElementById('problemPoops').textContent = problemPoops;
     }
 
-    // Filtri
+    updateFoodSuggestions() {
+        const datalist = document.getElementById('foodSuggestions');
+        datalist.innerHTML = this.foodHistory.map(food =>
+            `<option value="${food}">`
+        ).join('');
+    }
+
+    updateFoodFilter() {
+        const select = document.getElementById('filterFood');
+        const currentValue = select.value;
+
+        select.innerHTML = '<option value="all">Tutti i Cibi</option>' +
+            this.foodHistory.map(food =>
+                `<option value="${food}">${food}</option>`
+            ).join('');
+
+        if (this.foodHistory.includes(currentValue)) {
+            select.value = currentValue;
+        }
+    }
+
+    updateSavedNotesList() {
+        const select = document.getElementById('savedNotes');
+        select.innerHTML = '<option value="">Seleziona nota salvata o scrivi nuova...</option>' +
+            this.savedNotes.map((note, index) =>
+                `<option value="${index}">${note.substring(0, 50)}${note.length > 50 ? '...' : ''}</option>`
+            ).join('');
+    }
+
     applyFilters() {
         const period = document.getElementById('filterPeriod').value;
         const type = document.getElementById('filterType').value;
+        const food = document.getElementById('filterFood').value;
 
-        this.activeFilters = { period, type };
+        this.activeFilters = { period, type, food };
 
-        // Rimuovi tutti i marker
         this.poopMarkers.forEach(pm => {
             this.map.removeLayer(pm.marker);
         });
         this.poopMarkers = [];
 
-        // Filtra e riaggi marker
         const filteredPoops = this.getFilteredPoops();
         filteredPoops.forEach(poop => {
             this.addPoopMarker(poop);
@@ -384,13 +450,19 @@ class PoopTracker {
             filtered = filtered.filter(p => p.type === this.activeFilters.type);
         }
 
+        // Filtro cibo
+        if (this.activeFilters.food !== 'all') {
+            filtered = filtered.filter(p => p.food === this.activeFilters.food);
+        }
+
         return filtered;
     }
 
     resetFilters() {
-        this.activeFilters = { period: 'all', type: 'all' };
+        this.activeFilters = { period: 'all', type: 'all', food: 'all' };
         document.getElementById('filterPeriod').value = 'all';
         document.getElementById('filterType').value = 'all';
+        document.getElementById('filterFood').value = 'all';
         this.applyFilters();
     }
 
@@ -422,11 +494,13 @@ class PoopTracker {
                 minute: '2-digit'
             });
 
+            let foodInfo = poop.food ? `<br><small>🍖 ${poop.food}</small>` : '';
+
             return `
                 <div class="poop-list-item">
                     <div class="poop-item-info">
                         <div class="poop-item-date">${dateStr}</div>
-                        <div class="poop-item-status">${typeLabels[poop.type]}</div>
+                        <div class="poop-item-status">${typeLabels[poop.type]}${foodInfo}</div>
                     </div>
                     <div class="poop-item-actions">
                         <button class="btn-small" onclick="app.centerOnPoop(${poop.id})">📍</button>
@@ -452,8 +526,9 @@ class PoopTracker {
     // Modal Management
     openPoopDetailsModal() {
         document.getElementById('poopDetailsModal').classList.add('active');
-        // Reset form
         document.getElementById('poopDetailsForm').reset();
+        this.updateSavedNotesList();
+        this.updateFoodSuggestions();
     }
 
     closePoopDetailsModal() {
@@ -465,6 +540,7 @@ class PoopTracker {
         document.getElementById('filtersModal').classList.add('active');
         this.updateStats();
         this.updateRecentPoopsList();
+        this.updateFoodFilter();
     }
 
     closeFiltersModal() {
@@ -485,6 +561,63 @@ class PoopTracker {
 
     closeDogPhotoModal() {
         document.getElementById('dogPhotoModal').classList.remove('active');
+    }
+
+    openDogProfileModal() {
+        document.getElementById('dogProfileModal').classList.add('active');
+        this.loadDogProfileToForm();
+    }
+
+    closeDogProfileModal() {
+        document.getElementById('dogProfileModal').classList.remove('active');
+    }
+
+    loadDogProfileToForm() {
+        document.getElementById('dogName').value = this.dogProfile.name || '';
+        document.getElementById('dogBirthdate').value = this.dogProfile.birthdate || '';
+        document.getElementById('dogWeight').value = this.dogProfile.weight || '';
+        document.getElementById('dogBreed').value = this.dogProfile.breed || '';
+        document.getElementById('dogGender').value = this.dogProfile.gender || '';
+        document.getElementById('dogColor').value = this.dogProfile.color || '';
+        document.getElementById('dogMicrochip').value = this.dogProfile.microchip || '';
+        document.getElementById('dogChronicDiseases').value = this.dogProfile.chronicDiseases || '';
+        document.getElementById('dogFoodAllergies').value = this.dogProfile.foodAllergies || '';
+        document.getElementById('dogMedicineAllergies').value = this.dogProfile.medicineAllergies || '';
+        document.getElementById('dogCurrentMedicine').value = this.dogProfile.currentMedicine || '';
+        document.getElementById('dogSurgeries').value = this.dogProfile.surgeries || '';
+        document.getElementById('vetName').value = this.dogProfile.vetName || '';
+        document.getElementById('vetPhone').value = this.dogProfile.vetPhone || '';
+        document.getElementById('vetEmail').value = this.dogProfile.vetEmail || '';
+        document.getElementById('vetAddress').value = this.dogProfile.vetAddress || '';
+        document.getElementById('dogGeneralNotes').value = this.dogProfile.generalNotes || '';
+    }
+
+    saveDogProfile() {
+        this.dogProfile = {
+            name: document.getElementById('dogName').value.trim(),
+            birthdate: document.getElementById('dogBirthdate').value,
+            weight: document.getElementById('dogWeight').value,
+            breed: document.getElementById('dogBreed').value.trim(),
+            gender: document.getElementById('dogGender').value,
+            color: document.getElementById('dogColor').value.trim(),
+            microchip: document.getElementById('dogMicrochip').value.trim(),
+            chronicDiseases: document.getElementById('dogChronicDiseases').value.trim(),
+            foodAllergies: document.getElementById('dogFoodAllergies').value.trim(),
+            medicineAllergies: document.getElementById('dogMedicineAllergies').value.trim(),
+            currentMedicine: document.getElementById('dogCurrentMedicine').value.trim(),
+            surgeries: document.getElementById('dogSurgeries').value.trim(),
+            vetName: document.getElementById('vetName').value.trim(),
+            vetPhone: document.getElementById('vetPhone').value.trim(),
+            vetEmail: document.getElementById('vetEmail').value.trim(),
+            vetAddress: document.getElementById('vetAddress').value.trim(),
+            generalNotes: document.getElementById('dogGeneralNotes').value.trim()
+        };
+
+        this.saveData();
+        this.updateDogName();
+        this.updateUserMarker();
+        this.closeDogProfileModal();
+        this.showToast(`✅ Profilo di ${this.dogProfile.name || 'il cane'} salvato!`);
     }
 
     setupEventListeners() {
@@ -508,16 +641,31 @@ class PoopTracker {
             this.clearAllPoops();
         });
 
+        // Bottone profilo cane
+        document.getElementById('dogProfileBtn').addEventListener('click', () => {
+            this.openDogProfileModal();
+        });
+
         // Form dettagli cacca
         document.getElementById('poopDetailsForm').addEventListener('submit', (e) => {
             e.preventDefault();
+
+            const noteText = document.getElementById('poopNotes').value.trim();
+            const saveNoteChecked = document.getElementById('saveNote').checked;
+
+            if (saveNoteChecked && noteText && !this.savedNotes.includes(noteText)) {
+                this.savedNotes.push(noteText);
+                this.saveData();
+            }
 
             const details = {
                 type: document.getElementById('poopType').value,
                 size: document.getElementById('poopSize').value,
                 color: document.getElementById('poopColor').value,
                 smell: document.getElementById('poopSmell').value,
-                notes: document.getElementById('poopNotes').value.trim()
+                food: document.getElementById('poopFood').value.trim(),
+                hoursSinceMeal: document.getElementById('poopHoursSinceMeal').value,
+                notes: noteText
             };
 
             this.savePoopWithDetails(details);
@@ -526,6 +674,24 @@ class PoopTracker {
 
         document.getElementById('cancelPoopDetails').addEventListener('click', () => {
             this.closePoopDetailsModal();
+        });
+
+        // Selettore note salvate
+        document.getElementById('savedNotes').addEventListener('change', (e) => {
+            const index = e.target.value;
+            if (index !== '' && this.savedNotes[index]) {
+                document.getElementById('poopNotes').value = this.savedNotes[index];
+            }
+        });
+
+        // Form profilo cane
+        document.getElementById('dogProfileForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.saveDogProfile();
+        });
+
+        document.getElementById('cancelDogProfile').addEventListener('click', () => {
+            this.closeDogProfileModal();
         });
 
         // Filtri modal
@@ -613,7 +779,11 @@ class PoopTracker {
     saveData() {
         const data = {
             poops: this.poops,
-            dogPhoto: this.dogPhoto
+            dogPhoto: this.dogPhoto,
+            dogProfile: this.dogProfile,
+            savedNotes: this.savedNotes,
+            foodHistory: this.foodHistory,
+            isFirstTime: false
         };
         localStorage.setItem('poopTrackerData', JSON.stringify(data));
     }
@@ -625,6 +795,10 @@ class PoopTracker {
                 const data = JSON.parse(savedData);
                 this.poops = data.poops || [];
                 this.dogPhoto = data.dogPhoto || null;
+                this.dogProfile = data.dogProfile || {};
+                this.savedNotes = data.savedNotes || [];
+                this.foodHistory = data.foodHistory || [];
+                this.isFirstTime = data.isFirstTime !== false;
 
                 // Ricrea i marker per le cacche salvate
                 this.poops.forEach(poop => {
