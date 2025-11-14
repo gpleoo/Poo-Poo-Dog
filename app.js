@@ -706,39 +706,69 @@ class PoopTracker {
     }
 
     saveDogProfile() {
-        this.dogProfile = {
-            name: document.getElementById('dogName').value.trim(),
-            birthdate: document.getElementById('dogBirthdate').value,
-            weight: document.getElementById('dogWeight').value,
-            breed: document.getElementById('dogBreed').value.trim(),
-            gender: document.getElementById('dogGender').value,
-            color: document.getElementById('dogColor').value.trim(),
-            microchip: document.getElementById('dogMicrochip').value.trim(),
-            chronicDiseases: document.getElementById('dogChronicDiseases').value.trim(),
-            foodAllergies: document.getElementById('dogFoodAllergies').value.trim(),
-            medicineAllergies: document.getElementById('dogMedicineAllergies').value.trim(),
-            currentMedicine: document.getElementById('dogCurrentMedicine').value.trim(),
-            surgeries: document.getElementById('dogSurgeries').value.trim(),
-            vetName: document.getElementById('vetName').value.trim(),
-            vetPhone: document.getElementById('vetPhone').value.trim(),
-            vetEmail: document.getElementById('vetEmail').value.trim(),
-            vetAddress: document.getElementById('vetAddress').value.trim(),
-            lastVaccination: document.getElementById('lastVaccination').value,
-            nextVaccination: document.getElementById('nextVaccination').value,
-            lastAntiparasitic: document.getElementById('lastAntiparasitic').value,
-            nextAntiparasitic: document.getElementById('nextAntiparasitic').value,
-            lastFleaTick: document.getElementById('lastFleaTick').value,
-            nextFleaTick: document.getElementById('nextFleaTick').value,
-            vaccinationNotes: document.getElementById('vaccinationNotes').value.trim(),
-            generalNotes: document.getElementById('dogGeneralNotes').value.trim()
-        };
+        try {
+            console.log('saveDogProfile() chiamato');
 
-        this.saveData();
-        this.updateDogName();
-        this.updateUserMarker();
-        this.updateReminders();
-        this.closeDogProfileModal();
-        this.showToast(`✅ Profilo di ${this.dogProfile.name || 'il cane'} salvato!`);
+            // Validazione: nome cane obbligatorio
+            const dogNameInput = document.getElementById('dogName');
+            if (!dogNameInput) {
+                console.error('Campo dogName non trovato nel DOM');
+                this.showToast('❌ Errore: campo nome non trovato');
+                return;
+            }
+
+            const dogName = dogNameInput.value.trim();
+            if (!dogName) {
+                this.showToast('⚠️ Inserisci almeno il nome del cane!');
+                console.log('Nome cane vuoto, validazione fallita');
+                return;
+            }
+
+            console.log('Raccolta dati profilo cane:', dogName);
+
+            this.dogProfile = {
+                name: dogName,
+                birthdate: document.getElementById('dogBirthdate').value,
+                weight: document.getElementById('dogWeight').value,
+                breed: document.getElementById('dogBreed').value.trim(),
+                gender: document.getElementById('dogGender').value,
+                color: document.getElementById('dogColor').value.trim(),
+                microchip: document.getElementById('dogMicrochip').value.trim(),
+                chronicDiseases: document.getElementById('dogChronicDiseases').value.trim(),
+                foodAllergies: document.getElementById('dogFoodAllergies').value.trim(),
+                medicineAllergies: document.getElementById('dogMedicineAllergies').value.trim(),
+                currentMedicine: document.getElementById('dogCurrentMedicine').value.trim(),
+                surgeries: document.getElementById('dogSurgeries').value.trim(),
+                vetName: document.getElementById('vetName').value.trim(),
+                vetPhone: document.getElementById('vetPhone').value.trim(),
+                vetEmail: document.getElementById('vetEmail').value.trim(),
+                vetAddress: document.getElementById('vetAddress').value.trim(),
+                lastVaccination: document.getElementById('lastVaccination').value,
+                nextVaccination: document.getElementById('nextVaccination').value,
+                lastAntiparasitic: document.getElementById('lastAntiparasitic').value,
+                nextAntiparasitic: document.getElementById('nextAntiparasitic').value,
+                lastFleaTick: document.getElementById('lastFleaTick').value,
+                nextFleaTick: document.getElementById('nextFleaTick').value,
+                vaccinationNotes: document.getElementById('vaccinationNotes').value.trim(),
+                generalNotes: document.getElementById('dogGeneralNotes').value.trim()
+            };
+
+            console.log('Profilo raccolto, salvataggio in corso...');
+            this.saveData();
+            console.log('Dati salvati, aggiornamento UI...');
+
+            this.updateDogName();
+            this.updateUserMarker();
+            this.updateReminders();
+            this.closeDogProfileModal();
+
+            console.log('Profilo salvato con successo');
+            this.showToast(`✅ Profilo di ${this.dogProfile.name} salvato!`);
+        } catch (error) {
+            console.error('ERRORE in saveDogProfile():', error);
+            console.error('Stack trace:', error.stack);
+            this.showToast(`❌ Errore salvataggio: ${error.message}`);
+        }
     }
 
     // Reminders System
@@ -1637,6 +1667,8 @@ class PoopTracker {
     }
 
     setupEventListeners() {
+        console.log('setupEventListeners() chiamato - registrazione event listeners...');
+
         // Bottone aggiungi cacca
         document.getElementById('addPoopBtn').addEventListener('click', () => {
             this.addPoop();
@@ -1743,7 +1775,9 @@ class PoopTracker {
 
         // Form profilo cane
         document.getElementById('dogProfileForm').addEventListener('submit', (e) => {
+            console.log('Form dogProfileForm submit evento ricevuto');
             e.preventDefault();
+            console.log('preventDefault() chiamato, invocazione saveDogProfile()...');
             this.saveDogProfile();
         });
 
@@ -1824,6 +1858,8 @@ class PoopTracker {
                 }
             });
         });
+
+        console.log('setupEventListeners() completato - tutti gli event listeners registrati con successo');
     }
 
     showToast(message) {
@@ -1839,15 +1875,49 @@ class PoopTracker {
     }
 
     saveData() {
-        const data = {
-            poops: this.poops,
-            dogPhoto: this.dogPhoto,
-            dogProfile: this.dogProfile,
-            savedNotes: this.savedNotes,
-            foodHistory: this.foodHistory,
-            isFirstTime: false
-        };
-        localStorage.setItem('poopTrackerData', JSON.stringify(data));
+        try {
+            console.log('saveData() chiamato');
+
+            const data = {
+                poops: this.poops,
+                dogPhoto: this.dogPhoto,
+                dogProfile: this.dogProfile,
+                savedNotes: this.savedNotes,
+                foodHistory: this.foodHistory,
+                isFirstTime: false
+            };
+
+            // Verifica disponibilità localStorage
+            if (typeof localStorage === 'undefined') {
+                console.error('localStorage non disponibile');
+                this.showToast('❌ Archiviazione dati non disponibile in questo browser');
+                return false;
+            }
+
+            // Test scrittura localStorage
+            try {
+                localStorage.setItem('poopTrackerData', JSON.stringify(data));
+                console.log('Dati salvati in localStorage con successo');
+                return true;
+            } catch (storageError) {
+                console.error('Errore scrittura localStorage:', storageError);
+
+                // Errori comuni
+                if (storageError.name === 'QuotaExceededError') {
+                    this.showToast('❌ Spazio archiviazione esaurito. Cancella alcuni dati.');
+                } else if (storageError.name === 'SecurityError') {
+                    this.showToast('❌ Archiviazione bloccata. Controlla impostazioni privacy browser.');
+                } else {
+                    this.showToast(`❌ Errore salvataggio: ${storageError.message}`);
+                }
+                return false;
+            }
+        } catch (error) {
+            console.error('ERRORE in saveData():', error);
+            console.error('Stack trace:', error.stack);
+            this.showToast(`❌ Errore critico salvataggio: ${error.message}`);
+            return false;
+        }
     }
 
     loadSavedData() {
