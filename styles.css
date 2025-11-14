@@ -130,6 +130,28 @@ body {
     }
 }
 
+/* Settings Button */
+.btn-settings {
+    position: relative;
+    background: rgba(255, 255, 255, 0.3);
+    border: 2px solid white;
+    border-radius: 50%;
+    width: 45px;
+    height: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1.5em;
+    margin-left: 10px;
+}
+
+.btn-settings:hover {
+    background: rgba(255, 255, 255, 0.5);
+    transform: scale(1.1) rotate(90deg);
+    transition: all 0.3s ease;
+}
+
 /* Map */
 #map {
     flex: 1;
@@ -947,6 +969,206 @@ button:active {
 .no-reminders-icon {
     font-size: 3em;
     margin-bottom: 15px;
+}
+
+/* Settings/Privacy Modal */
+.modal-settings {
+    max-width: 650px;
+    max-height: 85vh;
+    overflow-y: auto;
+}
+
+.settings-section {
+    background: rgba(255, 255, 255, 0.7);
+    padding: 20px;
+    border-radius: 15px;
+    margin-bottom: 20px;
+}
+
+.settings-section h3 {
+    color: #667eea;
+    margin-bottom: 12px;
+    font-size: 1.2em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.settings-description {
+    color: #555;
+    font-size: 0.95em;
+    line-height: 1.6;
+    margin-bottom: 15px;
+}
+
+.setting-item {
+    margin: 15px 0;
+}
+
+.toggle-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-weight: 600;
+    color: #333;
+    cursor: pointer;
+}
+
+.toggle-switch {
+    position: relative;
+    width: 60px;
+    height: 30px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 30px;
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 22px;
+    width: 22px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+.toggle-switch input:checked + .toggle-slider {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.toggle-switch input:checked + .toggle-slider:before {
+    transform: translateX(30px);
+}
+
+.gps-status {
+    background: rgba(102, 187, 106, 0.2);
+    padding: 15px;
+    border-radius: 12px;
+    margin: 15px 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-left: 4px solid #66bb6a;
+}
+
+.gps-status.denied {
+    background: rgba(245, 87, 108, 0.2);
+    border-left-color: #f5576c;
+}
+
+#gpsStatusIcon {
+    font-size: 1.8em;
+}
+
+#gpsStatusText {
+    font-weight: 600;
+    color: #333;
+}
+
+.btn-request-gps {
+    width: 100%;
+    padding: 15px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 1em;
+    font-weight: 700;
+    cursor: pointer;
+    margin: 10px 0;
+    font-family: 'Fredoka', cursive;
+}
+
+.btn-request-gps:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+.gps-instructions {
+    background: #fff9e6;
+    padding: 15px;
+    border-radius: 12px;
+    border-left: 4px solid #ffa500;
+    margin: 15px 0;
+}
+
+.gps-instructions strong {
+    color: #ff8800;
+    display: block;
+    margin-bottom: 10px;
+}
+
+.gps-instructions ol {
+    margin: 10px 0;
+    padding-left: 20px;
+}
+
+.gps-instructions li {
+    margin: 8px 0;
+    line-height: 1.5;
+}
+
+.privacy-info {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+    margin-top: 15px;
+}
+
+.privacy-item {
+    background: rgba(102, 187, 106, 0.15);
+    padding: 12px;
+    border-radius: 10px;
+    text-align: center;
+    font-weight: 600;
+    color: #388e3c;
+}
+
+.btn-danger {
+    width: 100%;
+    padding: 15px;
+    background: linear-gradient(135deg, #f5576c 0%, #c92a3e 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 1em;
+    font-weight: 700;
+    cursor: pointer;
+    margin: 10px 0;
+    font-family: 'Fredoka', cursive;
+}
+
+.btn-danger:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(245, 87, 108, 0.4);
+}
+
+.settings-warning {
+    background: #fff5f5;
+    padding: 12px;
+    border-radius: 10px;
+    color: #f5576c;
+    font-size: 0.9em;
+    margin-top: 10px;
+    border-left: 3px solid #f5576c;
 }
 
 /* Health Charts */

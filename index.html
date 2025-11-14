@@ -52,6 +52,9 @@
                         <span class="reminder-icon">💉</span>
                         <span id="remindersBadge" class="reminders-badge" style="display: none;">0</span>
                     </button>
+                    <button id="settingsBtn" class="btn-settings" title="Impostazioni Privacy">
+                        ⚙️
+                    </button>
                 </div>
             </div>
         </header>
@@ -68,6 +71,80 @@
                 <div class="form-buttons">
                     <button id="openProfileFromReminders" class="btn-save">⚙️ Gestisci Date</button>
                     <button id="closeReminders" class="btn-secondary">✖️ Chiudi</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings/Privacy Modal -->
+        <div id="settingsModal" class="modal">
+            <div class="modal-content modal-settings">
+                <h2>⚙️ Impostazioni Privacy</h2>
+
+                <div class="settings-section">
+                    <h3>📍 Geolocalizzazione</h3>
+                    <p class="settings-description">
+                        L'app usa la tua posizione GPS per tracciare dove il tuo cane fa la cacca.
+                        I dati sono salvati solo sul tuo dispositivo, non vengono mai inviati a server esterni.
+                    </p>
+
+                    <div class="setting-item">
+                        <label class="toggle-label">
+                            <span>Attiva Geolocalizzazione</span>
+                            <div class="toggle-switch">
+                                <input type="checkbox" id="gpsToggle" checked>
+                                <span class="toggle-slider"></span>
+                            </div>
+                        </label>
+                    </div>
+
+                    <div id="gpsStatusInfo" class="gps-status">
+                        <div id="gpsStatusIcon">📍</div>
+                        <div id="gpsStatusText">Stato GPS: Attivo</div>
+                    </div>
+
+                    <button id="requestGPSBtn" class="btn-request-gps" style="display: none;">
+                        📍 Richiedi Permessi GPS
+                    </button>
+
+                    <div id="gpsInstructions" class="gps-instructions" style="display: none;">
+                        <strong>⚠️ GPS Negato - Come Riattivarlo:</strong>
+                        <ol>
+                            <li><strong>Safari (iPhone):</strong> Impostazioni → Safari → Posizione → Consenti</li>
+                            <li><strong>Chrome (Android):</strong> Impostazioni → Siti → Autorizzazioni → Posizione</li>
+                            <li><strong>Chrome (iPhone):</strong> Impostazioni iOS → Chrome → Posizione → Consenti</li>
+                            <li>Ricarica la pagina dopo aver modificato i permessi</li>
+                        </ol>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h3>🔒 Privacy Dati</h3>
+                    <p class="settings-description">
+                        Tutti i dati (cacche, foto, profilo cane) sono salvati <strong>esclusivamente sul tuo dispositivo</strong>
+                        tramite LocalStorage. Non vengono mai caricati su cloud o condivisi con terze parti.
+                    </p>
+
+                    <div class="privacy-info">
+                        <div class="privacy-item">✅ Nessun tracking</div>
+                        <div class="privacy-item">✅ Nessun cookie di terze parti</div>
+                        <div class="privacy-item">✅ Dati solo in locale</div>
+                        <div class="privacy-item">✅ Privacy totale</div>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h3>🗑️ Gestione Dati</h3>
+                    <button id="clearAllDataBtn" class="btn-danger">
+                        🗑️ Cancella Tutti i Dati
+                    </button>
+                    <p class="settings-warning">
+                        ⚠️ Questa azione cancellerà permanentemente tutte le cacche, il profilo del cane e le impostazioni.
+                        Non è reversibile!
+                    </p>
+                </div>
+
+                <div class="form-buttons">
+                    <button id="closeSettings" class="btn-save">✅ Chiudi</button>
                 </div>
             </div>
         </div>
