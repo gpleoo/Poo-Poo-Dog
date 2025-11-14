@@ -50,6 +50,10 @@ class PoopTracker {
         this.timelineChartInstance = null;
         this.foodChartInstance = null;
 
+        // GPS/Privacy settings
+        this.gpsEnabled = true;
+        this.gpsPermissionStatus = 'unknown'; // 'granted', 'denied', 'prompt', 'unknown'
+
         // Copyright Protection
         this._copyright = _COPYRIGHT_;
         this._verifyCopyright();
@@ -70,6 +74,8 @@ class PoopTracker {
     init() {
         this.initMap();
         this.loadSavedData();
+        this.loadPrivacySettings();
+        this.checkGPSPermissions();
         this.initGeolocation();
         this.setupEventListeners();
         this.updatePoopCounter();
@@ -103,29 +109,45 @@ class PoopTracker {
 
     initGeolocation() {
         if (!navigator.geolocation) {
+            this.gpsPermissionStatus = 'unsupported';
             this.showToast('❌ Geolocalizzazione non supportata dal browser');
+            this.updateGPSStatus();
             return;
         }
 
+        if (!this.gpsEnabled) {
+            console.log('GPS disabilitato dall\'utente');
+            return;
+        }
+
+        // Richiedi SEMPRE il permesso ad ogni avvio
         navigator.geolocation.getCurrentPosition(
             (position) => {
+                this.gpsPermissionStatus = 'granted';
                 this.userPosition = {
                     lat: position.coords.latitude,
                     lng: position.coords.longitude
                 };
                 this.map.setView([this.userPosition.lat, this.userPosition.lng], 16);
                 this.updateUserMarker();
+                this.updateGPSStatus();
                 this.showToast('📍 Posizione trovata!');
             },
             (error) => {
                 console.error('Errore geolocalizzazione:', error);
-                this.showToast('⚠️ Impossibile ottenere la posizione');
+                this.handleGeolocationError(error);
             },
             {
                 enableHighAccuracy: true,
-                maximumAge: 0
+                maximumAge: 0,
+                timeout: 10000
             }
         );
+
+        // Watch position solo se permessi concessi
+        if (this.watchId) {
+            navigator.geolocation.clearWatch(this.watchId);
+        }
 
         this.watchId = navigator.geolocation.watchPosition(
             (position) => {
@@ -144,6 +166,27 @@ class PoopTracker {
                 timeout: 5000
             }
         );
+    }
+
+    handleGeolocationError(error) {
+        switch(error.code) {
+            case error.PERMISSION_DENIED:
+                this.gpsPermissionStatus = 'denied';
+                this.showToast('❌ Permesso GPS negato. Vai in Impostazioni per riattivarlo.');
+                break;
+            case error.POSITION_UNAVAILABLE:
+                this.gpsPermissionStatus = 'unavailable';
+                this.showToast('⚠️ Posizione non disponibile');
+                break;
+            case error.TIMEOUT:
+                this.gpsPermissionStatus = 'timeout';
+                this.showToast('⏱️ Timeout GPS. Riprova.');
+                break;
+            default:
+                this.gpsPermissionStatus = 'error';
+                this.showToast('❌ Errore GPS sconosciuto');
+        }
+        this.updateGPSStatus();
     }
 
     updateUserMarker() {
@@ -778,6 +821,169 @@ class PoopTracker {
 
     closeRemindersModal() {
         document.getElementById('remindersModal').classList.remove('active');
+    }
+
+    // Privacy/Settings Modal Management
+    openSettingsModal() {
+        document.getElementById('settingsModal').classList.add('active');
+        this.updateGPSStatus();
+        this.updateGPSToggle();
+    }
+
+    closeSettingsModal() {
+        document.getElementById('settingsModal').classList.remove('active');
+    }
+
+    // GPS Permission Management
+    async checkGPSPermissions() {
+        if (!navigator.permissions) {
+            console.log('Permissions API non supportata');
+            return;
+        }
+
+        try {
+            const result = await navigator.permissions.query({ name: 'geolocation' });
+            this.gpsPermissionStatus = result.state;
+            this.updateGPSStatus();
+
+            result.addEventListener('change', () => {
+                this.gpsPermissionStatus = result.state;
+                this.updateGPSStatus();
+            });
+        } catch (error) {
+            console.log('Errore check permessi GPS:', error);
+        }
+    }
+
+    updateGPSStatus() {
+        const statusInfo = document.getElementById('gpsStatusInfo');
+        const statusIcon = document.getElementById('gpsStatusIcon');
+        const statusText = document.getElementById('gpsStatusText');
+        const requestBtn = document.getElementById('requestGPSBtn');
+        const instructions = document.getElementById('gpsInstructions');
+
+        if (!statusInfo) return;
+
+        if (this.gpsPermissionStatus === 'granted' && this.gpsEnabled) {
+            statusInfo.className = 'gps-status';
+            statusIcon.textContent = '✅';
+            statusText.textContent = 'Stato GPS: Attivo e Funzionante';
+            requestBtn.style.display = 'none';
+            instructions.style.display = 'none';
+        } else if (this.gpsPermissionStatus === 'denied') {
+            statusInfo.className = 'gps-status denied';
+            statusIcon.textContent = '❌';
+            statusText.textContent = 'Stato GPS: Permesso Negato';
+            requestBtn.style.display = 'block';
+            instructions.style.display = 'block';
+        } else if (!this.gpsEnabled) {
+            statusInfo.className = 'gps-status denied';
+            statusIcon.textContent = '⚠️';
+            statusText.textContent = 'Stato GPS: Disabilitato';
+            requestBtn.style.display = 'none';
+            instructions.style.display = 'none';
+        } else {
+            statusInfo.className = 'gps-status';
+            statusIcon.textContent = '📍';
+            statusText.textContent = 'Stato GPS: In Attesa...';
+            requestBtn.style.display = 'none';
+            instructions.style.display = 'none';
+        }
+    }
+
+    updateGPSToggle() {
+        const toggle = document.getElementById('gpsToggle');
+        if (toggle) {
+            toggle.checked = this.gpsEnabled;
+        }
+    }
+
+    toggleGPS() {
+        this.gpsEnabled = !this.gpsEnabled;
+        this.savePrivacySettings();
+        this.updateGPSToggle();
+
+        if (this.gpsEnabled) {
+            this.showToast('✅ GPS attivato');
+            this.initGeolocation();
+        } else {
+            this.showToast('⚠️ GPS disabilitato');
+            if (this.watchId) {
+                navigator.geolocation.clearWatch(this.watchId);
+                this.watchId = null;
+            }
+        }
+
+        this.updateGPSStatus();
+    }
+
+    requestGPSPermission() {
+        this.showToast('📍 Richiesta permessi GPS in corso...');
+        this.initGeolocation();
+    }
+
+    // Privacy Data Management
+    loadPrivacySettings() {
+        const settings = localStorage.getItem('privacySettings');
+        if (settings) {
+            try {
+                const parsed = JSON.parse(settings);
+                this.gpsEnabled = parsed.gpsEnabled !== false;
+            } catch (error) {
+                console.error('Errore caricamento impostazioni privacy:', error);
+            }
+        }
+    }
+
+    savePrivacySettings() {
+        const settings = {
+            gpsEnabled: this.gpsEnabled
+        };
+        localStorage.setItem('privacySettings', JSON.stringify(settings));
+    }
+
+    clearAllData() {
+        const dogName = this.dogProfile.name || 'il cane';
+
+        if (!confirm(`⚠️ SEI SICURO?\n\nQuesta azione cancellerà PERMANENTEMENTE:\n\n• Tutte le ${this.poops.length} cacche registrate\n• Il profilo di ${dogName}\n• Tutte le note salvate\n• Lo storico cibi\n• TUTTI i dati dell'app\n\nQuesta operazione NON È REVERSIBILE!\n\nDigita OK per confermare.`)) {
+            return;
+        }
+
+        const confirm2 = prompt('Digita "CANCELLA" in maiuscolo per confermare la cancellazione totale:');
+
+        if (confirm2 === 'CANCELLA') {
+            // Rimuovi marker dalla mappa
+            this.poopMarkers.forEach(pm => {
+                this.map.removeLayer(pm.marker);
+            });
+
+            // Cancella dati
+            this.poops = [];
+            this.poopMarkers = [];
+            this.dogPhoto = null;
+            this.dogProfile = {};
+            this.savedNotes = [];
+            this.foodHistory = [];
+            this.isFirstTime = true;
+
+            // Cancella localStorage
+            localStorage.removeItem('poopTrackerData');
+
+            // Aggiorna UI
+            this.updatePoopCounter();
+            this.updateStats();
+            this.updateDogName();
+            this.closeSettingsModal();
+
+            this.showToast('🗑️ Tutti i dati sono stati cancellati!');
+
+            // Reindirizza dopo 2 secondi
+            setTimeout(() => {
+                window.location.reload();
+            }, 2000);
+        } else {
+            this.showToast('❌ Cancellazione annullata');
+        }
     }
 
     updateRemindersList() {
@@ -1470,6 +1676,31 @@ class PoopTracker {
         document.getElementById('openProfileFromReminders').addEventListener('click', () => {
             this.closeRemindersModal();
             this.openDogProfileModal();
+        });
+
+        // Bottone impostazioni
+        document.getElementById('settingsBtn').addEventListener('click', () => {
+            this.openSettingsModal();
+        });
+
+        // Chiudi impostazioni
+        document.getElementById('closeSettings').addEventListener('click', () => {
+            this.closeSettingsModal();
+        });
+
+        // Toggle GPS
+        document.getElementById('gpsToggle').addEventListener('change', () => {
+            this.toggleGPS();
+        });
+
+        // Richiedi permessi GPS
+        document.getElementById('requestGPSBtn').addEventListener('click', () => {
+            this.requestGPSPermission();
+        });
+
+        // Cancella tutti i dati
+        document.getElementById('clearAllDataBtn').addEventListener('click', () => {
+            this.clearAllData();
         });
 
         // Form dettagli cacca
