@@ -58,6 +58,11 @@ class PoopTracker {
         this.autoCenter = true; // Auto-centra mappa quando l'utente si muove
         this.preferredZoom = 16; // Zoom preferito dall'utente
 
+        // Protezione loop infinito
+        this.isUpdatingPosition = false;
+        this.lastPositionUpdate = 0;
+        this.positionUpdateThrottle = 1000; // Minimum 1 second between updates
+
         // Copyright Protection
         this._copyright = _COPYRIGHT_;
         this._verifyCopyright();
@@ -73,6 +78,40 @@ class PoopTracker {
             'font-size: 12px; color: #667eea;');
         console.log('%cUnauthorized use, reproduction or distribution is prohibited and subject to legal action.',
             'font-size: 10px; color: #ff6b6b;');
+    }
+
+    playPlopSound() {
+        try {
+            // Crea AudioContext per generare suono sintetico
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+            // Oscillatore per il "plop"
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            // Configurazione suono "plop" divertente
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(150, audioContext.currentTime); // Frequenza iniziale
+            oscillator.frequency.exponentialRampToValueAtTime(50, audioContext.currentTime + 0.1); // Scende rapidamente
+
+            // Envelope per rendere il suono "plop"
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.15);
+
+            // Riproduci
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.15);
+
+            // Chiudi context dopo riproduzione
+            setTimeout(() => {
+                audioContext.close();
+            }, 200);
+        } catch (error) {
+            console.log('Audio non supportato o errore riproduzione:', error);
+        }
     }
 
     init() {
@@ -123,7 +162,12 @@ class PoopTracker {
         });
 
         // Quando utente cambia zoom → salva nuovo zoom preferito
+        // Protezione: ignora se stiamo aggiornando la posizione automaticamente
         this.map.on('zoomend', () => {
+            if (this.isUpdatingPosition) {
+                return; // Ignora eventi zoom durante aggiornamenti automatici
+            }
+
             const newZoom = this.map.getZoom();
             if (newZoom !== this.preferredZoom) {
                 this.preferredZoom = newZoom;
@@ -154,8 +198,18 @@ class PoopTracker {
                     lat: position.coords.latitude,
                     lng: position.coords.longitude
                 };
+
+                // Imposta flag per prevenire loop durante inizializzazione
+                this.isUpdatingPosition = true;
+
                 // Usa zoom preferito dall'utente
                 this.map.setView([this.userPosition.lat, this.userPosition.lng], this.preferredZoom);
+
+                // Reset flag dopo inizializzazione
+                setTimeout(() => {
+                    this.isUpdatingPosition = false;
+                }, 500);
+
                 this.updateUserMarker();
                 this.updateGPSStatus();
                 this.showToast('📍 Posizione trovata!');
@@ -178,6 +232,13 @@ class PoopTracker {
 
         this.watchId = navigator.geolocation.watchPosition(
             (position) => {
+                // Throttle: ignora aggiornamenti troppo frequenti (prevenzione loop)
+                const now = Date.now();
+                if (now - this.lastPositionUpdate < this.positionUpdateThrottle) {
+                    return;
+                }
+                this.lastPositionUpdate = now;
+
                 this.userPosition = {
                     lat: position.coords.latitude,
                     lng: position.coords.longitude
@@ -186,6 +247,9 @@ class PoopTracker {
 
                 // Auto-center mappa se attivo (come Google Maps)
                 if (this.autoCenter) {
+                    // Imposta flag per prevenire loop con eventi mappa
+                    this.isUpdatingPosition = true;
+
                     this.map.setView(
                         [this.userPosition.lat, this.userPosition.lng],
                         this.preferredZoom, // Mantiene zoom preferito
@@ -194,6 +258,11 @@ class PoopTracker {
                             duration: 0.3 // Animazione smooth
                         }
                     );
+
+                    // Reset flag dopo animazione completata
+                    setTimeout(() => {
+                        this.isUpdatingPosition = false;
+                    }, 500);
                 }
             },
             (error) => {
@@ -201,8 +270,8 @@ class PoopTracker {
             },
             {
                 enableHighAccuracy: true,
-                maximumAge: 0,
-                timeout: 5000
+                maximumAge: 5000, // Cache position for 5 seconds (invece di 0)
+                timeout: 10000 // Aumentato timeout per ridurre frequenza
             }
         );
     }
@@ -298,6 +367,9 @@ class PoopTracker {
             this.showToast('⚠️ Aspetta che la posizione venga rilevata!');
             return;
         }
+
+        // Riproduci suono "plop" divertente
+        this.playPlopSound();
 
         const position = this.findNearbyFreePosition(
             this.userPosition.lat,
@@ -479,10 +551,19 @@ class PoopTracker {
         // Riattiva auto-center quando utente preme il bottone
         this.autoCenter = true;
 
+        // Imposta flag per prevenire loop
+        this.isUpdatingPosition = true;
+
         this.map.setView([this.userPosition.lat, this.userPosition.lng], this.preferredZoom, {
             animate: true,
             duration: 0.5
         });
+
+        // Reset flag dopo animazione
+        setTimeout(() => {
+            this.isUpdatingPosition = false;
+        }, 600);
+
         this.showToast('📍 Auto-center attivato!');
     }
 
@@ -661,7 +742,19 @@ class PoopTracker {
     centerOnPoop(poopId) {
         const poop = this.poops.find(p => p.id === poopId);
         if (poop) {
+            // Disattiva auto-center quando utente naviga manualmente
+            this.autoCenter = false;
+
+            // Imposta flag per prevenire loop
+            this.isUpdatingPosition = true;
+
             this.map.setView([poop.lat, poop.lng], 18, { animate: true });
+
+            // Reset flag dopo animazione
+            setTimeout(() => {
+                this.isUpdatingPosition = false;
+            }, 500);
+
             const marker = this.poopMarkers.find(pm => pm.id === poopId);
             if (marker) {
                 marker.marker.openPopup();
