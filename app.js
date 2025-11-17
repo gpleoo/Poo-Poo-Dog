@@ -54,6 +54,10 @@ class PoopTracker {
         this.gpsEnabled = true;
         this.gpsPermissionStatus = 'unknown'; // 'granted', 'denied', 'prompt', 'unknown'
 
+        // Auto-center e Zoom settings
+        this.autoCenter = true; // Auto-centra mappa quando l'utente si muove
+        this.preferredZoom = 16; // Zoom preferito dall'utente
+
         // Copyright Protection
         this._copyright = _COPYRIGHT_;
         this._verifyCopyright();
@@ -75,9 +79,11 @@ class PoopTracker {
         this.initMap();
         this.loadSavedData();
         this.loadPrivacySettings();
+        this.loadMapSettings(); // Carica zoom preferito
         this.checkGPSPermissions();
         this.initGeolocation();
         this.setupEventListeners();
+        this.setupMapListeners(); // Listener per drag/zoom
         this.updatePoopCounter();
         this.updateStats();
         this.updateDogName();
@@ -107,6 +113,26 @@ class PoopTracker {
         this.map.zoomControl.setPosition('topright');
     }
 
+    setupMapListeners() {
+        // Quando utente trascina la mappa manualmente → disattiva auto-center
+        this.map.on('dragstart', () => {
+            if (this.autoCenter) {
+                this.autoCenter = false;
+                console.log('Auto-center disattivato - utente ha mosso la mappa');
+            }
+        });
+
+        // Quando utente cambia zoom → salva nuovo zoom preferito
+        this.map.on('zoomend', () => {
+            const newZoom = this.map.getZoom();
+            if (newZoom !== this.preferredZoom) {
+                this.preferredZoom = newZoom;
+                this.saveMapSettings();
+                console.log('Zoom preferito aggiornato:', this.preferredZoom);
+            }
+        });
+    }
+
     initGeolocation() {
         if (!navigator.geolocation) {
             this.gpsPermissionStatus = 'unsupported';
@@ -128,7 +154,8 @@ class PoopTracker {
                     lat: position.coords.latitude,
                     lng: position.coords.longitude
                 };
-                this.map.setView([this.userPosition.lat, this.userPosition.lng], 16);
+                // Usa zoom preferito dall'utente
+                this.map.setView([this.userPosition.lat, this.userPosition.lng], this.preferredZoom);
                 this.updateUserMarker();
                 this.updateGPSStatus();
                 this.showToast('📍 Posizione trovata!');
@@ -156,6 +183,18 @@ class PoopTracker {
                     lng: position.coords.longitude
                 };
                 this.updateUserMarker();
+
+                // Auto-center mappa se attivo (come Google Maps)
+                if (this.autoCenter) {
+                    this.map.setView(
+                        [this.userPosition.lat, this.userPosition.lng],
+                        this.preferredZoom, // Mantiene zoom preferito
+                        {
+                            animate: true,
+                            duration: 0.3 // Animazione smooth
+                        }
+                    );
+                }
             },
             (error) => {
                 console.error('Errore watch position:', error);
@@ -437,11 +476,14 @@ class PoopTracker {
             return;
         }
 
-        this.map.setView([this.userPosition.lat, this.userPosition.lng], 16, {
+        // Riattiva auto-center quando utente preme il bottone
+        this.autoCenter = true;
+
+        this.map.setView([this.userPosition.lat, this.userPosition.lng], this.preferredZoom, {
             animate: true,
             duration: 0.5
         });
-        this.showToast('📍 Centrato sulla tua posizione!');
+        this.showToast('📍 Auto-center attivato!');
     }
 
     updatePoopCounter() {
@@ -970,6 +1012,28 @@ class PoopTracker {
             gpsEnabled: this.gpsEnabled
         };
         localStorage.setItem('privacySettings', JSON.stringify(settings));
+    }
+
+    loadMapSettings() {
+        const settings = localStorage.getItem('mapSettings');
+        if (settings) {
+            try {
+                const parsed = JSON.parse(settings);
+                // Carica zoom preferito (default 16 se non presente)
+                this.preferredZoom = parsed.preferredZoom || 16;
+                console.log('Zoom preferito caricato:', this.preferredZoom);
+            } catch (error) {
+                console.error('Errore caricamento impostazioni mappa:', error);
+                this.preferredZoom = 16;
+            }
+        }
+    }
+
+    saveMapSettings() {
+        const settings = {
+            preferredZoom: this.preferredZoom
+        };
+        localStorage.setItem('mapSettings', JSON.stringify(settings));
     }
 
     clearAllData() {
