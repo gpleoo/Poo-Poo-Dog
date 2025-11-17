@@ -92,29 +92,30 @@ class PoopTracker {
             oscillator.connect(gainNode);
             gainNode.connect(audioContext.destination);
 
-            // Configurazione suono "fart" divertente
+            // Configurazione suono "fart" divertente - PIÙ SORDO E PIÙ LUNGO
             oscillator.type = 'sawtooth'; // Onda più ruvida per effetto scorreggia
-            oscillator.frequency.setValueAtTime(100, audioContext.currentTime); // Frequenza bassa
+            oscillator.frequency.setValueAtTime(70, audioContext.currentTime); // Frequenza più bassa (era 100)
 
-            // Variazioni di frequenza per effetto scorreggia
-            oscillator.frequency.linearRampToValueAtTime(80, audioContext.currentTime + 0.05);
-            oscillator.frequency.linearRampToValueAtTime(120, audioContext.currentTime + 0.1);
-            oscillator.frequency.linearRampToValueAtTime(60, audioContext.currentTime + 0.2);
-            oscillator.frequency.linearRampToValueAtTime(90, audioContext.currentTime + 0.3);
+            // Variazioni di frequenza per effetto scorreggia - frequenze più basse
+            oscillator.frequency.linearRampToValueAtTime(50, audioContext.currentTime + 0.08);
+            oscillator.frequency.linearRampToValueAtTime(85, audioContext.currentTime + 0.18);
+            oscillator.frequency.linearRampToValueAtTime(40, audioContext.currentTime + 0.32);
+            oscillator.frequency.linearRampToValueAtTime(65, audioContext.currentTime + 0.5);
 
-            // Envelope per volume più alto
-            gainNode.gain.setValueAtTime(0.6, audioContext.currentTime); // Volume più alto (era 0.3)
-            gainNode.gain.linearRampToValueAtTime(0.5, audioContext.currentTime + 0.1);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.35);
+            // Envelope per volume più alto - durata estesa
+            gainNode.gain.setValueAtTime(0.6, audioContext.currentTime); // Volume alto
+            gainNode.gain.linearRampToValueAtTime(0.55, audioContext.currentTime + 0.15);
+            gainNode.gain.linearRampToValueAtTime(0.5, audioContext.currentTime + 0.3);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.55);
 
-            // Riproduci
+            // Riproduci - durata estesa a 550ms (era 350ms)
             oscillator.start(audioContext.currentTime);
-            oscillator.stop(audioContext.currentTime + 0.35);
+            oscillator.stop(audioContext.currentTime + 0.55);
 
             // Chiudi context dopo riproduzione
             setTimeout(() => {
                 audioContext.close();
-            }, 400);
+            }, 600);
         } catch (error) {
             console.log('Audio non supportato o errore riproduzione:', error);
         }
@@ -511,18 +512,44 @@ class PoopTracker {
     }
 
     deletePoop(poopId) {
+        // Trova la cacca da cancellare
+        const poopToDelete = this.poops.find(p => p.id === poopId);
+        if (!poopToDelete) {
+            console.error('Cacca non trovata con id:', poopId);
+            this.showToast('❌ Errore: cacca non trovata!');
+            return;
+        }
+
+        // Conferma cancellazione
+        const dateStr = new Date(poopToDelete.timestamp).toLocaleDateString('it-IT', {
+            day: '2-digit',
+            month: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+
+        if (!confirm(`Vuoi davvero cancellare questa cacca?\n\n📅 ${dateStr}\n\nQuesta azione non può essere annullata.`)) {
+            return; // Cancellazione annullata
+        }
+
+        // Chiudi tutti i popup aperti sulla mappa
+        this.map.closePopup();
+
+        // Rimuovi la cacca dall'array (SOLO quella con l'id specificato)
         this.poops = this.poops.filter(p => p.id !== poopId);
 
+        // Rimuovi il marker dalla mappa
         const poopMarker = this.poopMarkers.find(pm => pm.id === poopId);
         if (poopMarker) {
             this.map.removeLayer(poopMarker.marker);
             this.poopMarkers = this.poopMarkers.filter(pm => pm.id !== poopId);
         }
 
+        // Aggiorna tutto
         this.saveData();
         this.updatePoopCounter();
         this.updateStats();
-        this.showToast('🗑️ Cacca rimossa!');
+        this.showToast('🗑️ Cacca rimossa con successo!');
         this.updateRecentPoopsList();
     }
 
