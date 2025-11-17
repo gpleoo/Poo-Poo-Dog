@@ -80,6 +80,40 @@ class PoopTracker {
             'font-size: 10px; color: #ff6b6b;');
     }
 
+    playPlopSound() {
+        try {
+            // Crea AudioContext per generare suono sintetico
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+            // Oscillatore per il "plop"
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            // Configurazione suono "plop" divertente
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(150, audioContext.currentTime); // Frequenza iniziale
+            oscillator.frequency.exponentialRampToValueAtTime(50, audioContext.currentTime + 0.1); // Scende rapidamente
+
+            // Envelope per rendere il suono "plop"
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.15);
+
+            // Riproduci
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.15);
+
+            // Chiudi context dopo riproduzione
+            setTimeout(() => {
+                audioContext.close();
+            }, 200);
+        } catch (error) {
+            console.log('Audio non supportato o errore riproduzione:', error);
+        }
+    }
+
     init() {
         this.initMap();
         this.loadSavedData();
@@ -333,6 +367,9 @@ class PoopTracker {
             this.showToast('⚠️ Aspetta che la posizione venga rilevata!');
             return;
         }
+
+        // Riproduci suono "plop" divertente
+        this.playPlopSound();
 
         const position = this.findNearbyFreePosition(
             this.userPosition.lat,
