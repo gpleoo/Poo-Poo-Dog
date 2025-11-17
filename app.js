@@ -85,30 +85,36 @@ class PoopTracker {
             // Crea AudioContext per generare suono sintetico
             const audioContext = new (window.AudioContext || window.webkitAudioContext)();
 
-            // Oscillatore per il "plop"
+            // Oscillatore principale per il "fart"
             const oscillator = audioContext.createOscillator();
             const gainNode = audioContext.createGain();
 
             oscillator.connect(gainNode);
             gainNode.connect(audioContext.destination);
 
-            // Configurazione suono "plop" divertente
-            oscillator.type = 'sine';
-            oscillator.frequency.setValueAtTime(150, audioContext.currentTime); // Frequenza iniziale
-            oscillator.frequency.exponentialRampToValueAtTime(50, audioContext.currentTime + 0.1); // Scende rapidamente
+            // Configurazione suono "fart" divertente
+            oscillator.type = 'sawtooth'; // Onda più ruvida per effetto scorreggia
+            oscillator.frequency.setValueAtTime(100, audioContext.currentTime); // Frequenza bassa
 
-            // Envelope per rendere il suono "plop"
-            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.15);
+            // Variazioni di frequenza per effetto scorreggia
+            oscillator.frequency.linearRampToValueAtTime(80, audioContext.currentTime + 0.05);
+            oscillator.frequency.linearRampToValueAtTime(120, audioContext.currentTime + 0.1);
+            oscillator.frequency.linearRampToValueAtTime(60, audioContext.currentTime + 0.2);
+            oscillator.frequency.linearRampToValueAtTime(90, audioContext.currentTime + 0.3);
+
+            // Envelope per volume più alto
+            gainNode.gain.setValueAtTime(0.6, audioContext.currentTime); // Volume più alto (era 0.3)
+            gainNode.gain.linearRampToValueAtTime(0.5, audioContext.currentTime + 0.1);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.35);
 
             // Riproduci
             oscillator.start(audioContext.currentTime);
-            oscillator.stop(audioContext.currentTime + 0.15);
+            oscillator.stop(audioContext.currentTime + 0.35);
 
             // Chiudi context dopo riproduzione
             setTimeout(() => {
                 audioContext.close();
-            }, 200);
+            }, 400);
         } catch (error) {
             console.log('Audio non supportato o errore riproduzione:', error);
         }
