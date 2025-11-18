@@ -492,18 +492,7 @@ class PoopTracker {
 
         popupContent += `
                 </div>
-                📅 ${dateStr}<br>
-                <button onclick="app.deletePoop(${poop.id})" style="
-                    margin-top: 10px;
-                    padding: 5px 15px;
-                    background: #f5576c;
-                    color: white;
-                    border: none;
-                    border-radius: 15px;
-                    cursor: pointer;
-                    font-family: 'Fredoka', cursive;
-                    font-weight: 600;
-                ">🗑️ Rimuovi</button>
+                📅 ${dateStr}
             </div>
         `;
 
@@ -528,7 +517,7 @@ class PoopTracker {
             minute: '2-digit'
         });
 
-        if (!confirm(`Vuoi davvero cancellare questa cacca?\n\n📅 ${dateStr}\n\nQuesta azione non può essere annullata.`)) {
+        if (!confirm(`Vuoi davvero cancellare questa cacca?\n\n📅 ${dateStr}\n\nQuesta azione non può essere ripristinata.`)) {
             return; // Cancellazione annullata
         }
 
