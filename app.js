@@ -1863,11 +1863,6 @@ class PoopTracker {
             this.openFiltersModal();
         });
 
-        // Bottone cancella tutto
-        document.getElementById('clearAllBtn').addEventListener('click', () => {
-            this.clearAllPoops();
-        });
-
         // Bottone profilo cane
         document.getElementById('dogProfileBtn').addEventListener('click', () => {
             this.openDogProfileModal();
