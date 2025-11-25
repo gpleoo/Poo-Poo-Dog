@@ -205,6 +205,25 @@ button:active {
     box-shadow: 0 8px 25px rgba(139, 69, 19, 0.6);
 }
 
+.btn-manual-poop {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 15px 25px;
+    border-radius: 50px;
+    font-size: 1.1em;
+    font-weight: 700;
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5),
+                inset 0 -3px 0 rgba(0, 0, 0, 0.3);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-manual-poop:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+}
+
 .btn-icon {
     font-size: 1.5em;
     animation: bounce 1s infinite;
@@ -469,6 +488,11 @@ button:active {
     .btn-add-poop {
         padding: 12px 25px;
         font-size: 1.1em;
+    }
+
+    .btn-manual-poop {
+        padding: 12px 20px;
+        font-size: 0.95em;
     }
 
     .btn-center, .btn-clear {

@@ -386,10 +386,27 @@ class PoopTracker {
         this.pendingPoopData = {
             lat: position.lat,
             lng: position.lng,
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
+            isManual: false // Cacca con GPS
         };
 
         this.openPoopDetailsModal();
+    }
+
+    addManualPoop() {
+        // Inserimento manuale senza GPS
+        // Riproduci suono
+        this.playPlopSound();
+
+        this.pendingPoopData = {
+            lat: null,
+            lng: null,
+            timestamp: new Date().toISOString(),
+            isManual: true // Cacca manuale senza GPS
+        };
+
+        this.openPoopDetailsModal();
+        this.showToast('📝 Inserimento manuale - la cacca non apparirà sulla mappa');
     }
 
     savePoopWithDetails(details) {
@@ -408,13 +425,22 @@ class PoopTracker {
             this.foodHistory.push(details.food.trim());
         }
 
-        this.addPoopMarker(poop);
+        // Aggiungi marker sulla mappa SOLO se NON è manuale
+        if (!poop.isManual) {
+            this.addPoopMarker(poop);
+        }
+
         this.saveData();
         this.updatePoopCounter();
         this.updateStats();
         this.updateFoodSuggestions();
         this.updateFoodFilter();
-        this.showToast('💩 Cacca registrata con successo!');
+
+        if (poop.isManual) {
+            this.showToast('📝 Cacca manuale registrata! (solo statistiche)');
+        } else {
+            this.showToast('💩 Cacca registrata con successo!');
+        }
 
         this.pendingPoopData = null;
     }
@@ -745,15 +771,21 @@ class PoopTracker {
             });
 
             let foodInfo = poop.food ? `<br><small>🍖 ${poop.food}</small>` : '';
+            let manualBadge = poop.isManual ? `<br><small style="color: #999;">📝 Manuale</small>` : '';
+
+            // Bottone mappa disabilitato per cacche manuali
+            let mapButton = poop.isManual
+                ? `<button class="btn-small" disabled style="opacity: 0.3;" title="Cacca manuale - non sulla mappa">📍</button>`
+                : `<button class="btn-small" onclick="app.centerOnPoop(${poop.id})">📍</button>`;
 
             return `
                 <div class="poop-list-item">
                     <div class="poop-item-info">
                         <div class="poop-item-date">${dateStr}</div>
-                        <div class="poop-item-status">${typeLabels[poop.type]}${foodInfo}</div>
+                        <div class="poop-item-status">${typeLabels[poop.type]}${foodInfo}${manualBadge}</div>
                     </div>
                     <div class="poop-item-actions">
-                        <button class="btn-small" onclick="app.centerOnPoop(${poop.id})">📍</button>
+                        ${mapButton}
                         <button class="btn-small" onclick="app.deletePoop(${poop.id})">🗑️</button>
                     </div>
                 </div>
@@ -1853,6 +1885,11 @@ class PoopTracker {
             this.addPoop();
         });
 
+        // Bottone aggiungi cacca manuale
+        document.getElementById('addManualPoopBtn').addEventListener('click', () => {
+            this.addManualPoop();
+        });
+
         // Bottone centra mappa
         document.getElementById('centerMapBtn').addEventListener('click', () => {
             this.centerOnUser();
@@ -2106,9 +2143,11 @@ class PoopTracker {
                 this.foodHistory = data.foodHistory || [];
                 this.isFirstTime = data.isFirstTime !== false;
 
-                // Ricrea i marker per le cacche salvate
+                // Ricrea i marker per le cacche salvate (solo quelle con GPS)
                 this.poops.forEach(poop => {
-                    this.addPoopMarker(poop);
+                    if (!poop.isManual) {
+                        this.addPoopMarker(poop);
+                    }
                 });
 
                 if (this.poops.length > 0) {
