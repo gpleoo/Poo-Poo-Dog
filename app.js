@@ -401,12 +401,12 @@ class PoopTracker {
         this.pendingPoopData = {
             lat: null,
             lng: null,
-            timestamp: new Date().toISOString(),
+            timestamp: null, // Sarà impostato dal form con data/ora personalizzata
             isManual: true // Cacca manuale senza GPS
         };
 
         this.openPoopDetailsModal();
-        this.showToast('📝 Inserimento manuale - la cacca non apparirà sulla mappa');
+        this.showToast('📝 Inserimento manuale - specifica data e ora');
     }
 
     savePoopWithDetails(details) {
@@ -823,6 +823,34 @@ class PoopTracker {
         document.getElementById('poopDetailsForm').reset();
         this.updateSavedNotesList();
         this.updateFoodSuggestions();
+
+        // Mostra/nascondi campi data/ora per inserimento manuale
+        const manualSection = document.getElementById('manualDateTimeSection');
+        const dateInput = document.getElementById('poopDate');
+        const timeInput = document.getElementById('poopTime');
+
+        if (this.pendingPoopData && this.pendingPoopData.isManual) {
+            // Inserimento manuale - mostra campi data/ora
+            manualSection.style.display = 'block';
+
+            // Imposta data/ora corrente di default
+            const now = new Date();
+            const dateStr = now.toISOString().split('T')[0]; // YYYY-MM-DD
+            const timeStr = now.toTimeString().slice(0, 5); // HH:MM
+
+            dateInput.value = dateStr;
+            timeInput.value = timeStr;
+            dateInput.required = true;
+            timeInput.required = true;
+
+            // Imposta max data/ora a oggi (non può essere nel futuro)
+            dateInput.max = dateStr;
+        } else {
+            // Inserimento GPS - nascondi campi data/ora
+            manualSection.style.display = 'none';
+            dateInput.required = false;
+            timeInput.required = false;
+        }
     }
 
     closePoopDetailsModal() {
@@ -1956,6 +1984,35 @@ class PoopTracker {
             if (saveNoteChecked && noteText && !this.savedNotes.includes(noteText)) {
                 this.savedNotes.push(noteText);
                 this.saveData();
+            }
+
+            // Se è inserimento manuale, usa data/ora personalizzata
+            if (this.pendingPoopData && this.pendingPoopData.isManual) {
+                const dateValue = document.getElementById('poopDate').value;
+                const timeValue = document.getElementById('poopTime').value;
+
+                if (!dateValue || !timeValue) {
+                    this.showToast('⚠️ Inserisci data e ora!');
+                    return;
+                }
+
+                // Crea timestamp da data e ora
+                const customDateTime = new Date(`${dateValue}T${timeValue}`);
+
+                // Valida che non sia nel futuro
+                const now = new Date();
+                if (customDateTime > now) {
+                    this.showToast('⚠️ La data/ora non può essere nel futuro!');
+                    return;
+                }
+
+                // Aggiorna timestamp in pendingPoopData
+                this.pendingPoopData.timestamp = customDateTime.toISOString();
+            } else {
+                // Inserimento GPS - usa timestamp corrente se non già impostato
+                if (!this.pendingPoopData.timestamp) {
+                    this.pendingPoopData.timestamp = new Date().toISOString();
+                }
             }
 
             const details = {
