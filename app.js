@@ -1255,6 +1255,159 @@ class PoopTracker {
         }
     }
 
+    async exportBackup() {
+        try {
+            // Crea oggetto con tutti i dati
+            const backupData = {
+                version: '1.0',
+                exportDate: new Date().toISOString(),
+                dogName: this.dogProfile.name || 'Sconosciuto',
+                data: {
+                    poops: this.poops,
+                    dogPhoto: this.dogPhoto,
+                    dogProfile: this.dogProfile,
+                    savedNotes: this.savedNotes,
+                    foodHistory: this.foodHistory,
+                    isFirstTime: this.isFirstTime
+                }
+            };
+
+            // Converti in JSON
+            const jsonString = JSON.stringify(backupData, null, 2);
+
+            // Crea nome file con data
+            const now = new Date();
+            const dateStr = now.toISOString().split('T')[0]; // YYYY-MM-DD
+            const dogName = this.dogProfile.name || 'PooPoo';
+            const fileName = `${dogName}_Backup_${dateStr}.json`;
+
+            // Prova a usare File System Access API (permette scelta cartella)
+            if ('showSaveFilePicker' in window) {
+                try {
+                    const handle = await window.showSaveFilePicker({
+                        suggestedName: fileName,
+                        types: [{
+                            description: 'Backup JSON',
+                            accept: { 'application/json': ['.json'] }
+                        }]
+                    });
+
+                    const writable = await handle.createWritable();
+                    await writable.write(jsonString);
+                    await writable.close();
+
+                    this.showToast(`💾 Backup salvato: ${fileName}`);
+                } catch (err) {
+                    // Utente ha annullato la scelta
+                    if (err.name === 'AbortError') {
+                        this.showToast('❌ Salvataggio annullato');
+                    } else {
+                        throw err; // Altri errori vanno al fallback
+                    }
+                }
+            } else {
+                // Fallback per browser che non supportano showSaveFilePicker
+                // (Firefox, Safari mobile, etc.)
+                const blob = new Blob([jsonString], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                this.showToast(`💾 Backup scaricato: ${fileName}`);
+            }
+        } catch (error) {
+            console.error('Errore esportazione backup:', error);
+            this.showToast('❌ Errore durante l\'esportazione!');
+        }
+    }
+
+    importBackup() {
+        // Apri file picker
+        const input = document.getElementById('importBackupInput');
+        input.click();
+    }
+
+    processBackupFile(file) {
+        const reader = new FileReader();
+
+        reader.onload = (e) => {
+            try {
+                const backupData = JSON.parse(e.target.result);
+
+                // Validazione base
+                if (!backupData.version || !backupData.data) {
+                    this.showToast('❌ File backup non valido!');
+                    return;
+                }
+
+                const dogName = backupData.dogName || 'Sconosciuto';
+                const poopsCount = backupData.data.poops?.length || 0;
+                const exportDate = new Date(backupData.exportDate).toLocaleDateString('it-IT');
+
+                // Conferma import
+                if (!confirm(`📂 Importa Backup?\n\n🐕 Cane: ${dogName}\n💩 Cacche: ${poopsCount}\n📅 Data backup: ${exportDate}\n\n⚠️ ATTENZIONE: Questo sovrascriverà tutti i dati attuali!\n\nVuoi procedere?`)) {
+                    this.showToast('❌ Importazione annullata');
+                    return;
+                }
+
+                // Rimuovi vecchi marker dalla mappa
+                this.poopMarkers.forEach(pm => {
+                    this.map.removeLayer(pm.marker);
+                });
+                this.poopMarkers = [];
+
+                // Importa dati
+                this.poops = backupData.data.poops || [];
+                this.dogPhoto = backupData.data.dogPhoto || null;
+                this.dogProfile = backupData.data.dogProfile || {};
+                this.savedNotes = backupData.data.savedNotes || [];
+                this.foodHistory = backupData.data.foodHistory || [];
+                this.isFirstTime = backupData.data.isFirstTime !== false;
+
+                // Ricrea marker sulla mappa (solo cacche con GPS)
+                this.poops.forEach(poop => {
+                    if (!poop.isManual) {
+                        this.addPoopMarker(poop);
+                    }
+                });
+
+                // Salva tutto
+                this.saveData();
+
+                // Aggiorna UI
+                this.updatePoopCounter();
+                this.updateStats();
+                this.updateDogName();
+                this.updateFoodSuggestions();
+                this.updateFoodFilter();
+                this.updateSavedNotesList();
+                this.closeSettingsModal();
+
+                this.showToast(`✅ Backup importato! ${poopsCount} cacche ripristinate`);
+
+                // Ricarica dopo 2 secondi per applicare tutte le modifiche
+                setTimeout(() => {
+                    window.location.reload();
+                }, 2000);
+
+            } catch (error) {
+                console.error('Errore importazione backup:', error);
+                this.showToast('❌ Errore: file backup corrotto!');
+            }
+        };
+
+        reader.onerror = () => {
+            this.showToast('❌ Errore lettura file!');
+        };
+
+        reader.readAsText(file);
+    }
+
     updateRemindersList() {
         const list = document.getElementById('remindersList');
         const reminders = this.getUpcomingReminders();
@@ -1972,6 +2125,26 @@ class PoopTracker {
         // Cancella tutti i dati
         document.getElementById('clearAllDataBtn').addEventListener('click', () => {
             this.clearAllData();
+        });
+
+        // Esporta backup
+        document.getElementById('exportBackupBtn').addEventListener('click', () => {
+            this.exportBackup();
+        });
+
+        // Importa backup
+        document.getElementById('importBackupBtn').addEventListener('click', () => {
+            this.importBackup();
+        });
+
+        // File input per importazione backup
+        document.getElementById('importBackupInput').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                this.processBackupFile(file);
+                // Reset input per permettere di selezionare lo stesso file di nuovo
+                e.target.value = '';
+            }
         });
 
         // Form dettagli cacca

@@ -133,6 +133,28 @@
                 </div>
 
                 <div class="settings-section">
+                    <h3>💾 Backup e Ripristino</h3>
+                    <p class="settings-description">
+                        Esporta tutti i tuoi dati (cacche, profilo cane, note) in un file di backup.
+                        Potrai importarlo in futuro per ripristinare tutto.
+                    </p>
+
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px;">
+                        <button id="exportBackupBtn" class="btn-save">
+                            💾 Esporta Backup
+                        </button>
+                        <button id="importBackupBtn" class="btn-secondary">
+                            📂 Importa Backup
+                        </button>
+                    </div>
+                    <input type="file" id="importBackupInput" accept=".json" style="display: none;">
+
+                    <p class="settings-info" style="font-size: 0.9em; color: #666;">
+                        💡 Consiglio: Fai un backup regolarmente per non perdere i dati!
+                    </p>
+                </div>
+
+                <div class="settings-section">
                     <h3>🗑️ Gestione Dati</h3>
                     <button id="clearAllDataBtn" class="btn-danger">
                         🗑️ Cancella Tutti i Dati
