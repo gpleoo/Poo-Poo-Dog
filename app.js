@@ -36,6 +36,7 @@ class PoopTracker {
         this.userPosition = null;
         this.poops = [];
         this.poopMarkers = [];
+        this.markerClusterGroup = null; // Cluster group for poop markers
         this.dogPhoto = null;
         this.dogProfile = {};
         this.savedNotes = [];
@@ -157,6 +158,17 @@ class PoopTracker {
         }).addTo(this.map);
 
         this.map.zoomControl.setPosition('topright');
+
+        // Inizializza il cluster group con icone personalizzate
+        this.markerClusterGroup = L.markerClusterGroup({
+            iconCreateFunction: (cluster) => this.createClusterIcon(cluster),
+            maxClusterRadius: 80, // Raggruppa marker entro 80 pixel
+            spiderfyOnMaxZoom: true, // Espandi i marker quando si raggiunge il max zoom
+            showCoverageOnHover: false, // Non mostrare il raggio del cluster
+            zoomToBoundsOnClick: true // Zoom quando si clicca sul cluster
+        });
+
+        this.map.addLayer(this.markerClusterGroup);
     }
 
     setupMapListeners() {
@@ -465,6 +477,70 @@ class PoopTracker {
         }
     }
 
+    createClusterIcon(cluster) {
+        // Ottieni tutti i marker nel cluster
+        const markers = cluster.getAllChildMarkers();
+        const count = markers.length;
+
+        // Conta i tipi di cacche nel cluster
+        const typeCounts = {};
+        markers.forEach(marker => {
+            // Recupera il tipo dalla cacca associata al marker
+            const poopId = marker.options.poopId;
+            const poop = this.poops.find(p => p.id === poopId);
+            if (poop && poop.type) {
+                typeCounts[poop.type] = (typeCounts[poop.type] || 0) + 1;
+            }
+        });
+
+        // Trova il tipo più comune
+        let mostCommonType = 'healthy';
+        let maxCount = 0;
+        for (const [type, count] of Object.entries(typeCounts)) {
+            if (count > maxCount) {
+                maxCount = count;
+                mostCommonType = type;
+            }
+        }
+
+        // Ottieni l'icona corrispondente al tipo più comune
+        const iconName = this.getPoopIcon(mostCommonType);
+
+        // Crea l'icona del cluster con la forma della cacca e il numero
+        const html = `
+            <div class="custom-cluster-icon" style="position: relative;">
+                <svg class="poop-svg-icon-cluster" style="width: 60px; height: 60px;">
+                    <use href="#${iconName}"></use>
+                </svg>
+                <div class="cluster-count" style="
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    background: white;
+                    border: 2px solid #333;
+                    border-radius: 50%;
+                    width: 24px;
+                    height: 24px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-weight: bold;
+                    font-size: 12px;
+                    color: #333;
+                    font-family: 'Fredoka', cursive;
+                ">${count}</div>
+            </div>
+        `;
+
+        return L.divIcon({
+            html: html,
+            className: 'custom-cluster-marker',
+            iconSize: L.point(60, 60),
+            iconAnchor: [30, 30]
+        });
+    }
+
     addPoopMarker(poop) {
         const iconName = this.getPoopIcon(poop.type);
 
@@ -476,8 +552,9 @@ class PoopTracker {
         });
 
         const marker = L.marker([poop.lat, poop.lng], {
-            icon: poopIcon
-        }).addTo(this.map);
+            icon: poopIcon,
+            poopId: poop.id // Aggiungi l'ID per il clustering
+        });
 
         const date = new Date(poop.timestamp);
         const dateStr = date.toLocaleDateString('it-IT', {
@@ -523,6 +600,10 @@ class PoopTracker {
         `;
 
         marker.bindPopup(popupContent);
+
+        // Aggiungi il marker al cluster group invece che direttamente alla mappa
+        this.markerClusterGroup.addLayer(marker);
+
         this.poopMarkers.push({ id: poop.id, marker: marker });
     }
 
@@ -553,10 +634,10 @@ class PoopTracker {
         // Rimuovi la cacca dall'array (SOLO quella con l'id specificato)
         this.poops = this.poops.filter(p => p.id !== poopId);
 
-        // Rimuovi il marker dalla mappa
+        // Rimuovi il marker dal cluster group
         const poopMarker = this.poopMarkers.find(pm => pm.id === poopId);
         if (poopMarker) {
-            this.map.removeLayer(poopMarker.marker);
+            this.markerClusterGroup.removeLayer(poopMarker.marker);
             this.poopMarkers = this.poopMarkers.filter(pm => pm.id !== poopId);
         }
 
@@ -577,7 +658,7 @@ class PoopTracker {
         const dogName = this.dogProfile.name || 'il cane';
         if (confirm(`Sei sicuro di voler rimuovere tutte le ${this.poops.length} cacche di ${dogName}? 💩`)) {
             this.poopMarkers.forEach(pm => {
-                this.map.removeLayer(pm.marker);
+                this.markerClusterGroup.removeLayer(pm.marker);
             });
 
             this.poops = [];
@@ -674,8 +755,9 @@ class PoopTracker {
 
         this.activeFilters = { period, type, food };
 
+        // Rimuovi tutti i marker dal cluster group
         this.poopMarkers.forEach(pm => {
-            this.map.removeLayer(pm.marker);
+            this.markerClusterGroup.removeLayer(pm.marker);
         });
         this.poopMarkers = [];
 
@@ -1221,9 +1303,9 @@ class PoopTracker {
         const confirm2 = prompt('Digita "CANCELLA" in maiuscolo per confermare la cancellazione totale:');
 
         if (confirm2 === 'CANCELLA') {
-            // Rimuovi marker dalla mappa
+            // Rimuovi marker dal cluster group
             this.poopMarkers.forEach(pm => {
-                this.map.removeLayer(pm.marker);
+                this.markerClusterGroup.removeLayer(pm.marker);
             });
 
             // Cancella dati
@@ -1355,9 +1437,9 @@ class PoopTracker {
                     return;
                 }
 
-                // Rimuovi vecchi marker dalla mappa
+                // Rimuovi vecchi marker dal cluster group
                 this.poopMarkers.forEach(pm => {
-                    this.map.removeLayer(pm.marker);
+                    this.markerClusterGroup.removeLayer(pm.marker);
                 });
                 this.poopMarkers = [];
 
