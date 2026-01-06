@@ -1255,7 +1255,7 @@ class PoopTracker {
         }
     }
 
-    exportBackup() {
+    async exportBackup() {
         try {
             // Crea oggetto con tutti i dati
             const backupData = {
@@ -1275,26 +1275,51 @@ class PoopTracker {
             // Converti in JSON
             const jsonString = JSON.stringify(backupData, null, 2);
 
-            // Crea blob
-            const blob = new Blob([jsonString], { type: 'application/json' });
-
             // Crea nome file con data
             const now = new Date();
             const dateStr = now.toISOString().split('T')[0]; // YYYY-MM-DD
             const dogName = this.dogProfile.name || 'PooPoo';
             const fileName = `${dogName}_Backup_${dateStr}.json`;
 
-            // Download file
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = fileName;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
+            // Prova a usare File System Access API (permette scelta cartella)
+            if ('showSaveFilePicker' in window) {
+                try {
+                    const handle = await window.showSaveFilePicker({
+                        suggestedName: fileName,
+                        types: [{
+                            description: 'Backup JSON',
+                            accept: { 'application/json': ['.json'] }
+                        }]
+                    });
 
-            this.showToast(`💾 Backup esportato: ${fileName}`);
+                    const writable = await handle.createWritable();
+                    await writable.write(jsonString);
+                    await writable.close();
+
+                    this.showToast(`💾 Backup salvato: ${fileName}`);
+                } catch (err) {
+                    // Utente ha annullato la scelta
+                    if (err.name === 'AbortError') {
+                        this.showToast('❌ Salvataggio annullato');
+                    } else {
+                        throw err; // Altri errori vanno al fallback
+                    }
+                }
+            } else {
+                // Fallback per browser che non supportano showSaveFilePicker
+                // (Firefox, Safari mobile, etc.)
+                const blob = new Blob([jsonString], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                this.showToast(`💾 Backup scaricato: ${fileName}`);
+            }
         } catch (error) {
             console.error('Errore esportazione backup:', error);
             this.showToast('❌ Errore durante l\'esportazione!');
